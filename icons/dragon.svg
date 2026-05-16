@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#2d1b69"/>
+      <stop offset="100%" stop-color="#0f0a2e"/>
+    </radialGradient>
+    <radialGradient id="body" cx="40%" cy="35%" r="60%">
+      <stop offset="0%" stop-color="#a855f7"/>
+      <stop offset="100%" stop-color="#6d28d9"/>
+    </radialGradient>
+    <radialGradient id="belly" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#e9d5ff"/>
+      <stop offset="100%" stop-color="#c084fc"/>
+    </radialGradient>
+    <radialGradient id="eye" cx="35%" cy="35%" r="60%">
+      <stop offset="0%" stop-color="#fbbf24"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </radialGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2.5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background circle -->
+  <circle cx="64" cy="64" r="62" fill="url(#bg)" stroke="#4c1d95" stroke-width="2"/>
+
+  <!-- Dragon tail -->
+  <path d="M 92 88 Q 108 100 112 90 Q 116 80 104 76 Q 96 82 92 88Z" fill="#7c3aed" opacity="0.85"/>
+
+  <!-- Dragon body -->
+  <ellipse cx="60" cy="72" rx="30" ry="26" fill="url(#body)"/>
+
+  <!-- Dragon belly -->
+  <ellipse cx="60" cy="76" rx="18" ry="16" fill="url(#belly)" opacity="0.7"/>
+
+  <!-- Dragon wing left -->
+  <path d="M 36 62 Q 14 40 18 28 Q 28 32 38 50 Q 44 58 40 65Z" fill="#8b5cf6" opacity="0.9"/>
+  <path d="M 36 62 Q 22 48 26 36 Q 32 38 36 52Z" fill="#a78bfa" opacity="0.6"/>
+
+  <!-- Dragon wing right -->
+  <path d="M 84 62 Q 106 40 102 28 Q 92 32 82 50 Q 76 58 80 65Z" fill="#8b5cf6" opacity="0.9"/>
+  <path d="M 84 62 Q 98 48 94 36 Q 88 38 84 52Z" fill="#a78bfa" opacity="0.6"/>
+
+  <!-- Dragon neck -->
+  <ellipse cx="60" cy="52" rx="14" ry="18" fill="url(#body)"/>
+
+  <!-- Dragon head -->
+  <ellipse cx="60" cy="38" rx="20" ry="18" fill="url(#body)"/>
+
+  <!-- Snout -->
+  <ellipse cx="60" cy="46" rx="12" ry="8" fill="#7c3aed"/>
+
+  <!-- Nostrils -->
+  <ellipse cx="56" cy="47" rx="2" ry="1.5" fill="#4c1d95" opacity="0.7"/>
+  <ellipse cx="64" cy="47" rx="2" ry="1.5" fill="#4c1d95" opacity="0.7"/>
+
+  <!-- Eyes -->
+  <ellipse cx="52" cy="34" rx="7" ry="7" fill="url(#eye)" filter="url(#glow)"/>
+  <ellipse cx="68" cy="34" rx="7" ry="7" fill="url(#eye)" filter="url(#glow)"/>
+  <circle cx="53" cy="34" r="4" fill="#1c1917"/>
+  <circle cx="69" cy="34" r="4" fill="#1c1917"/>
+  <circle cx="51" cy="32" r="1.5" fill="white" opacity="0.9"/>
+  <circle cx="67" cy="32" r="1.5" fill="white" opacity="0.9"/>
+
+  <!-- Horns -->
+  <path d="M 50 24 Q 46 12 50 8 Q 54 14 52 24Z" fill="#c084fc"/>
+  <path d="M 70 24 Q 74 12 70 8 Q 66 14 68 24Z" fill="#c084fc"/>
+
+  <!-- Ear frills -->
+  <path d="M 40 30 Q 32 24 34 18 Q 40 22 42 30Z" fill="#a78bfa" opacity="0.8"/>
+  <path d="M 80 30 Q 88 24 86 18 Q 80 22 78 30Z" fill="#a78bfa" opacity="0.8"/>
+
+  <!-- Fire breath / magic sparkles -->
+  <circle cx="72" cy="50" r="2" fill="#fbbf24" opacity="0.9" filter="url(#glow)"/>
+  <circle cx="78" cy="46" r="1.5" fill="#fb923c" opacity="0.8" filter="url(#glow)"/>
+  <circle cx="82" cy="52" r="1" fill="#fbbf24" opacity="0.7"/>
+  <path d="M 75 53 Q 85 48 90 52 Q 86 56 78 55Z" fill="#fbbf24" opacity="0.6" filter="url(#glow)"/>
+
+  <!-- Scales detail on body -->
+  <ellipse cx="50" cy="70" rx="4" ry="3" fill="#6d28d9" opacity="0.4"/>
+  <ellipse cx="60" cy="67" rx="4" ry="3" fill="#6d28d9" opacity="0.4"/>
+  <ellipse cx="70" cy="70" rx="4" ry="3" fill="#6d28d9" opacity="0.4"/>
+  <ellipse cx="55" cy="78" rx="4" ry="3" fill="#6d28d9" opacity="0.3"/>
+  <ellipse cx="65" cy="78" rx="4" ry="3" fill="#6d28d9" opacity="0.3"/>
+
+  <!-- Claws -->
+  <path d="M 38 90 Q 34 96 36 98 Q 40 94 42 90Z" fill="#c084fc"/>
+  <path d="M 44 92 Q 42 98 44 100 Q 48 96 48 92Z" fill="#c084fc"/>
+  <path d="M 76 90 Q 80 96 78 98 Q 74 94 72 90Z" fill="#c084fc"/>
+  <path d="M 70 92 Q 72 98 70 100 Q 66 96 66 92Z" fill="#c084fc"/>
+
+  <!-- Magic rune / letter accent (ударение mark) -->
+  <text x="55" y="18" font-size="10" fill="#fbbf24" font-weight="bold" opacity="0.9" filter="url(#glow)">´</text>
+</svg>

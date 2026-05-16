@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 460 150">
+  <defs>
+    <linearGradient id="tail" x1="0" x2="1">
+      <stop offset="0%" stop-color="#060303"/>
+      <stop offset="45%" stop-color="#6d1712"/>
+      <stop offset="100%" stop-color="#d8a93b"/>
+    </linearGradient>
+    <filter id="s" x="-20%" y="-35%" width="145%" height="170%"><feDropShadow dx="0" dy="8" stdDeviation="7" flood-color="#140807" flood-opacity=".35"/></filter>
+  </defs>
+  <path filter="url(#s)" d="M24 98 C108 29 210 29 315 80 C365 104 407 92 443 48 C431 120 360 145 294 113 C198 67 113 75 43 128 Z" fill="url(#tail)"/>
+  <path d="M55 100 C148 50 232 57 319 94" stroke="#f7d26d" stroke-width="8" fill="none" opacity=".55"/>
+  <path d="M409 53 L452 19 L443 84 Z" fill="#e7bd4a"/>
+</svg>
