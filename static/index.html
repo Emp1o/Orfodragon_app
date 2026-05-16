@@ -1,0 +1,1493 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ОрфоДракон</title>
+<link rel="icon" type="image/png" href="/icons/favicon.png">
+<style>
+:root{
+  --bg:#0b1020;--bg2:#111827;--bg3:#1a2235;--bg4:#0f172a;
+  --bdr:#1e2d45;--bdr2:#2d3d55;
+  --ac:#7c3aed;--ac2:#c084fc;--ac3:#ddd6fe;
+  --gold:#f6c84c;--fire:#ef4444;--grn:#22c55e;--blue:#60a5fa;--org:#f97316;
+  --tx:#e2e8f0;--tx2:#94a3b8;--tx3:#4b6080;
+  --shd:0 8px 32px #0009;--r:10px;--r2:18px;--ease:.2s cubic-bezier(.4,0,.2,1);
+}
+[data-theme=light]{
+  --bg:#f0f4ff;--bg2:#fff;--bg3:#eef2ff;--bg4:#e8eeff;
+  --bdr:#d0daf0;--bdr2:#b8c8e8;--tx:#111827;--tx2:#374151;--tx3:#6b7280;
+  --shd:0 4px 20px #0002;
+}
+*,::before,::after{box-sizing:border-box;margin:0;padding:0}
+html{height:100%;-webkit-font-smoothing:antialiased}
+body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--tx);font-size:14px;overflow:hidden}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes pop{0%{transform:scale(1)}40%{transform:scale(1.22)}100%{transform:scale(1)}}
+@keyframes dragonIdle{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes dragonWin{0%{transform:scale(1) rotate(0)}30%{transform:scale(1.25) rotate(-12deg)}60%{transform:scale(1.2) rotate(10deg)}100%{transform:scale(1)}}
+@keyframes bossDmg{0%{filter:brightness(4) saturate(0)}70%{filter:brightness(2) drop-shadow(0 0 18px #ef4444)}100%{filter:none}}
+@keyframes toastIn{from{opacity:0;transform:translateX(40px) scale(.92)}to{opacity:1;transform:none}}
+@keyframes toastOut{to{opacity:0;transform:translateX(40px)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pfly{0%{transform:translateY(0) scale(1);opacity:1}100%{transform:translateY(-70px) scale(0);opacity:0}}
+@keyframes vowelPulse{0%,100%{box-shadow:0 0 0 0 #7c3aed44}50%{box-shadow:0 0 0 6px #7c3aed22}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.35}}
+@keyframes slideR{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:none}}
+
+.app{display:flex;flex-direction:column;height:100vh}
+.body{display:flex;flex:1;overflow:hidden}
+
+/* header */
+.hdr{display:flex;align-items:center;gap:10px;padding:8px 18px;background:linear-gradient(90deg,#040d1a,#130830,#1a0520);border-bottom:1px solid #2a1a5e;flex-shrink:0;position:relative;z-index:100}
+[data-theme=light] .hdr{background:linear-gradient(90deg,#4c1d95,#6d28d9)}
+.hdrg{width:36px;height:36px;cursor:pointer;animation:dragonIdle 4s ease-in-out infinite;filter:drop-shadow(0 0 8px #c084fc77);transition:transform var(--ease)}
+.hdrg:hover{transform:scale(1.2) rotate(-5deg)!important;animation:none}
+.htit{font-size:18px;font-weight:900;color:var(--ac2);letter-spacing:-.5px}
+.hsub{font-size:10px;color:#7c6aaa;margin-top:1px}
+.hst{margin-left:auto;display:flex;gap:14px}
+.hs{text-align:center}.hs-v{font-size:14px;font-weight:800;color:var(--ac2)}.hs-l{font-size:9px;color:var(--tx3)}
+.ibtn{background:none;border:1px solid #3a3a5c;color:var(--tx2);padding:5px 10px;border-radius:8px;cursor:pointer;font-size:13px;transition:var(--ease);margin-left:6px}
+.ibtn:hover{background:var(--bg3)}
+
+/* sidebar */
+.sb{width:182px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--bdr);display:flex;flex-direction:column;padding:10px 7px;gap:2px;overflow-y:auto}
+.nb{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:9px;border:none;background:none;color:var(--tx2);font-size:13px;cursor:pointer;width:100%;text-align:left;transition:var(--ease);position:relative}
+.nb:hover{background:var(--bg3);color:var(--tx);transform:translateX(2px)}
+.nb.on{background:linear-gradient(135deg,#4c1d95,#6d28d9);color:#fff;box-shadow:0 4px 12px #7c3aed33}
+.nb .ic{font-size:17px;width:20px;text-align:center}
+.nsep{height:1px;background:var(--bdr);margin:5px 4px}
+.nbdg{position:absolute;right:8px;background:var(--fire);color:#fff;font-size:10px;font-weight:800;padding:1px 5px;border-radius:99px}
+.nbot{margin-top:auto}
+
+/* content */
+.cnt{flex:1;overflow-y:auto;padding:20px 24px}
+.pg{display:none;animation:fadeIn .25s both}.pg.on{display:block}
+
+/* components */
+.card{background:var(--bg2);border:1px solid var(--bdr);border-radius:var(--r);padding:16px;margin-bottom:14px}
+.ct{font-size:10px;font-weight:700;color:var(--ac);margin-bottom:10px;text-transform:uppercase;letter-spacing:.6px}
+.pt{font-size:20px;font-weight:800;color:var(--ac2);margin-bottom:3px}
+.ps{font-size:12px;color:var(--tx3);margin-bottom:18px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.smin{background:var(--bg3);border:1px solid var(--bdr);border-radius:10px;padding:12px;text-align:center;transition:var(--ease)}
+.smin:hover{transform:translateY(-2px);box-shadow:0 4px 12px #0004}
+.sv{font-size:22px;font-weight:800;color:var(--ac2)}.sl{font-size:10px;color:var(--tx3);margin-top:2px}
+
+/* forms */
+textarea,input[type=text],input[type=url],input[type=number],select{
+  width:100%;padding:9px 12px;background:var(--bg4);border:1px solid var(--bdr2);
+  border-radius:8px;color:var(--tx);font-size:13px;font-family:inherit;outline:none;
+  transition:border-color var(--ease),box-shadow var(--ease);resize:vertical}
+textarea:focus,input:focus,select:focus{border-color:var(--ac);box-shadow:0 0 0 3px #7c3aed22}
+label{display:block;font-size:12px;color:var(--tx2);margin-bottom:4px;font-weight:600}
+input[type=range]{width:100%;accent-color:var(--ac);cursor:pointer}
+input[type=checkbox]{accent-color:var(--ac);width:15px;height:15px;cursor:pointer;flex-shrink:0}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:8px;border:none;font-size:13px;font-weight:700;cursor:pointer;transition:var(--ease);text-decoration:none;white-space:nowrap}
+.btn:active{transform:scale(.97)!important}
+.bp{background:linear-gradient(135deg,#5b21b6,#7c3aed);color:#fff;box-shadow:0 4px 12px #7c3aed33}
+.bp:hover{transform:translateY(-1px);box-shadow:0 6px 16px #7c3aed44}
+.bs{background:linear-gradient(135deg,#92400e,#d97706);color:#fff}
+.bs:hover{transform:translateY(-1px)}
+.bgold{background:linear-gradient(135deg,#78350f,#d97706);color:#fff}
+.bd{background:linear-gradient(135deg,#991b1b,#dc2626);color:#fff}
+.bd:hover{transform:translateY(-1px)}
+.bok{background:linear-gradient(135deg,#14532d,#16a34a);color:#fff}
+.bok:hover{transform:translateY(-1px)}
+.bg{background:var(--bg3);color:var(--tx2);border:1px solid var(--bdr)}
+.bg:hover{background:var(--bdr2);color:var(--tx)}
+.bsm{padding:5px 11px;font-size:12px}.bxs{padding:3px 8px;font-size:11px}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none!important}
+.brow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+/* progress */
+.prog{height:6px;background:var(--bg3);border-radius:99px;overflow:hidden}
+.pf{height:100%;background:linear-gradient(90deg,var(--ac),var(--ac2));border-radius:99px;transition:width .5s ease}
+.pf.grn{background:linear-gradient(90deg,#15803d,#22c55e)}
+.pf.gld{background:linear-gradient(90deg,#92400e,#f6c84c)}
+
+/* boss */
+.bossbox{background:linear-gradient(135deg,#0f172a,#3b0764,#1e0a00);border:1px solid #7c3aed33;border-radius:var(--r2);padding:16px;margin-bottom:14px}
+.brow2{display:flex;align-items:center;gap:14px;margin-bottom:10px}
+.bimg{width:80px;height:54px;object-fit:contain;flex-shrink:0;filter:drop-shadow(0 4px 16px #ef444466);transition:var(--ease)}
+.bimg.dmg{animation:bossDmg .5s ease}
+.bname{font-weight:800;color:#fff;font-size:15px}
+.bstage{font-size:10px;color:var(--org);margin-top:2px;font-weight:700}
+.bhp{font-size:11px;color:#fca5a5;margin-top:3px}
+.hptrack{height:12px;background:#1f2937;border-radius:99px;overflow:hidden;border:1px solid #374151}
+.hpfill{height:100%;background:linear-gradient(90deg,#ef4444,#f97316,#f6c84c);border-radius:99px;transition:width .7s ease}
+.bdmg{font-size:13px;font-weight:900;color:var(--fire);margin-top:5px;min-height:18px;opacity:0;transition:opacity .3s}
+.bdmg.on{opacity:1;animation:slideR .3s both}
+
+/* big word */
+.bigw{font-size:44px;font-weight:900;color:var(--ac2);letter-spacing:3px;text-align:center;min-height:56px;text-shadow:0 0 40px #c084fc22;transition:all var(--ease);padding:10px 0}
+
+/* accent builder */
+.abwrap{display:flex;flex-wrap:wrap;gap:5px;padding:12px;background:var(--bg4);border-radius:8px;border:1px solid var(--bdr);min-height:52px;align-items:center}
+.ab-btn{padding:7px 11px;border-radius:7px;border:none;background:var(--bg3);color:var(--tx2);font-size:18px;font-weight:600;cursor:default;transition:var(--ease);position:relative}
+.ab-v{background:var(--bg3);color:var(--ac3);cursor:pointer;border:1px solid var(--ac);animation:vowelPulse 2s ease-in-out infinite}
+.ab-v:hover{background:var(--ac);color:#fff;transform:scale(1.15);animation:none}
+.ab-sel{background:var(--ac);color:#fff;animation:pop .3s both}
+.ab-pre{width:100%;font-size:13px;color:var(--tx2);padding-top:4px;border-top:1px solid var(--bdr);margin-top:4px}
+
+/* comma builder */
+.cbwrap{display:flex;flex-wrap:wrap;align-items:center;gap:2px;padding:12px;background:var(--bg4);border-radius:8px;border:1px solid var(--bdr);line-height:2.2;min-height:52px}
+.cbw{padding:5px 9px;border-radius:6px;font-size:14px;font-weight:600;background:var(--bg3);color:var(--tx);user-select:none}
+.cbs{width:24px;height:28px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;border-radius:5px;color:var(--tx3);transition:var(--ease);font-size:18px;font-weight:900}
+.cbs:hover{color:var(--ac2);transform:scale(1.3);background:var(--bg3)}
+.cbs.on{color:var(--ac2)}.cbs::after{content:'|';opacity:.3}.cbs.on::after{content:',';opacity:1;color:var(--ac2)}
+.cbres{width:100%;font-size:13px;color:var(--tx2);padding-top:6px;border-top:1px solid var(--bdr);margin-top:4px}
+
+/* training */
+.tcard{background:linear-gradient(135deg,var(--bg2),#1a0a3e);border:2px solid var(--bdr2);border-radius:20px;padding:32px 24px;text-align:center;min-height:220px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;animation:fadeIn .3s}
+.tkind{font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:1px}
+.tq{font-size:34px;font-weight:900;color:var(--tx);letter-spacing:2px;word-break:break-word}
+.thint{font-size:13px;color:var(--tx3)}
+.ta{font-size:28px;font-weight:900;color:var(--ac2);letter-spacing:2px;animation:fadeIn .3s}
+.tr{font-size:12px;color:var(--blue);max-width:480px;animation:fadeIn .3s}
+
+/* EGE */
+.egeq{background:var(--bg2);border:1px solid var(--bdr);border-radius:var(--r);padding:16px;margin-bottom:10px;animation:fadeIn .3s both}
+.egeq.right{border-left:3px solid var(--grn)}
+.egeqn{font-size:10px;color:var(--tx3);margin-bottom:4px;font-weight:700;text-transform:uppercase}
+.egeqt{font-size:15px;font-weight:700;margin-bottom:5px}
+.egeqp{font-size:13px;color:var(--tx2);margin-bottom:10px;font-style:italic}
+.egeopts{display:flex;flex-direction:column;gap:5px}
+.egeopt{display:flex;align-items:center;gap:9px;padding:9px 13px;border-radius:8px;background:var(--bg3);border:1px solid var(--bdr);cursor:pointer;transition:var(--ease);user-select:none}
+.egeopt:hover{background:var(--bg4);border-color:var(--ac)}
+.egeopt input{flex-shrink:0;accent-color:var(--ac)}
+.etimer{font-size:28px;font-weight:900;color:var(--ac2);text-align:center;padding:12px;background:var(--bg2);border-radius:var(--r);border:1px solid var(--bdr)}
+.etimer.warn{color:var(--fire);animation:blink 1s ease-in-out infinite}
+
+/* table */
+.twrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;padding:8px 10px;font-size:10px;color:var(--tx3);border-bottom:1px solid var(--bdr);font-weight:700;text-transform:uppercase;background:var(--bg2)}
+td{padding:7px 10px;font-size:13px;border-bottom:1px solid var(--bdr);vertical-align:middle}
+tr:hover td{background:var(--bg3)}
+.tag{display:inline-block;padding:2px 7px;border-radius:99px;font-size:10px;font-weight:700}
+.ts{background:#1e1b4b;color:var(--ac3)}.tp{background:#1e3a5f;color:#93c5fd}
+.dnow{color:var(--fire);font-weight:700}
+
+/* gamification */
+.miitem{background:var(--bg3);border-radius:8px;padding:10px 12px;margin-bottom:7px;animation:fadeIn .3s}
+.mitit{font-size:13px;font-weight:700;margin-bottom:3px}.miprog{font-size:11px;color:var(--tx3);margin-bottom:4px}
+.ach{display:inline-flex;flex-direction:column;align-items:center;gap:4px;padding:10px;background:var(--bg3);border-radius:10px;border:1px solid var(--bdr);min-width:86px;transition:var(--ease);animation:fadeIn .3s both}
+.ach:hover{transform:translateY(-3px);box-shadow:0 6px 16px #0004}
+.aem{font-size:24px}.at{font-size:11px;font-weight:700;text-align:center}
+.achg{display:flex;flex-wrap:wrap;gap:7px;margin-top:8px}
+.lchip{display:inline-block;padding:3px 10px;border-radius:99px;font-size:12px;font-weight:800}
+.lb{background:#92400e;color:#fcd34d}.ls{background:#374151;color:#e5e7eb}
+.lg{background:#78350f;color:#fde68a}.lp{background:#1e3a5f;color:#93c5fd}
+.le{background:#064e3b;color:#6ee7b7}.ld{background:#4c1d95;color:#ddd6fe}
+.wi{padding:6px 0;font-size:13px;border-bottom:1px solid var(--bdr);display:flex;justify-content:space-between;align-items:center}
+.wi:last-child{border:none}
+
+/* skins */
+.skgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-top:10px}
+.skcard{background:var(--bg3);border:2px solid var(--bdr);border-radius:12px;padding:10px;text-align:center;transition:var(--ease);cursor:pointer;animation:fadeIn .3s both}
+.skcard:hover:not(.locked){transform:translateY(-3px);box-shadow:0 6px 16px #0004;border-color:var(--ac)}
+.skcard.sel{border-color:var(--ac2);box-shadow:0 0 0 3px #c084fc33}
+.skcard.locked{opacity:.55;cursor:default;filter:grayscale(.6)}
+.skcard img{width:100%;height:90px;object-fit:contain;margin-bottom:6px}
+.skn{font-size:12px;font-weight:700}.skst{font-size:10px;color:var(--tx3);margin-top:2px}
+.skcard.sel .skst{color:var(--grn);font-weight:700}
+
+/* ci items */
+.ci{background:var(--bg3);border:1px solid var(--bdr);border-radius:9px;padding:9px 12px;margin-bottom:6px;animation:fadeIn .2s both}
+.ci-m{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+.ci-w{font-weight:700;font-size:14px}.ci-a{font-size:14px;font-weight:800;color:var(--ac2)}
+.ci-meta{font-size:10px;color:var(--tx3);margin-top:2px}
+.ci-act{display:flex;gap:4px;margin-top:6px}
+.fbtn{background:none;border:none;font-size:18px;cursor:pointer;color:var(--tx3);transition:var(--ease);padding:2px 4px;border-radius:4px}
+.fbtn:hover,.fbtn.on{color:var(--gold)}.fbtn.on{animation:pop .3s both}
+
+/* summary */
+.sumbox{background:linear-gradient(135deg,var(--bg2),#1a0a3e);border:1px solid var(--ac);border-radius:var(--r2);padding:28px;text-align:center;animation:fadeIn .4s both}
+.sumt{font-size:26px;font-weight:900;color:var(--ac2);margin-bottom:10px}
+.sumb{font-size:14px;color:var(--tx2);line-height:2.2}
+
+/* toasts */
+.tarea{position:fixed;bottom:18px;right:18px;display:flex;flex-direction:column;gap:8px;z-index:9999}
+.toast{background:var(--bg2);border:1px solid var(--bdr2);border-radius:10px;padding:11px 15px;font-size:13px;box-shadow:var(--shd);animation:toastIn .25s both;max-width:300px;display:flex;align-items:center;gap:9px}
+.tico{font-size:17px;flex-shrink:0}
+.toast.ok{border-left:3px solid var(--grn)}.toast.err{border-left:3px solid var(--fire)}
+.toast.inf{border-left:3px solid var(--ac)}.toast.warn{border-left:3px solid var(--gold)}
+
+/* inline status */
+.ist{font-size:12px;padding:5px 10px;border-radius:6px;margin-top:6px;display:none;animation:fadeIn .2s}
+.ist.on{display:block}
+.ist.ok{background:#14532d22;color:var(--grn)}.ist.err{background:#7f1d1d22;color:var(--fire)}
+.ist.warn{background:#78350f22;color:var(--gold)}.ist.inf{background:#1e1b4b;color:var(--ac3)}
+
+/* misc */
+.hint{font-size:11px;color:var(--tx3)}.muted{color:var(--tx3)}
+.wbox{background:#78350f22;border:1px solid #92400e44;border-radius:8px;padding:8px 12px;font-size:12px;color:var(--gold);margin-bottom:10px}
+.rlist{margin:6px 0 0 16px;font-size:12px;color:var(--tx2);line-height:2}
+.particle{position:fixed;pointer-events:none;z-index:9998;border-radius:50%;animation:pfly 1s ease-out both}
+.dragon-tail-swipe{position:fixed;pointer-events:none;z-index:99999;width:var(--tw,320px);height:var(--th,104px)}
+.dragon-tail-wave{position:absolute;inset:0;background:url('/icons/dragon-tail.svg') center/contain no-repeat}
+.dragon-tail-tip-flick{display:none}
+@media(max-width:700px){
+  .sb{width:52px}.nb span:not(.ic){display:none}
+  .g4{grid-template-columns:1fr 1fr}.g2{grid-template-columns:1fr}
+  .hst{display:none}.cnt{padding:12px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="hdr">
+  <img src="/icons/dragon-king.svg" class="hdrg" id="hDragon" alt="🐉" onclick="nav('main')" title="Главная">
+  <div><div class="htit">ОрфоДракон</div><div class="hsub">тренажёр ударений и запятых</div></div>
+  <div class="hst">
+    <div class="hs"><div class="hs-v" id="hTotal">—</div><div class="hs-l">карточек</div></div>
+    <div class="hs"><div class="hs-v" id="hDue">—</div><div class="hs-l">повторить</div></div>
+    <div class="hs"><div class="hs-v" id="hStreak">—</div><div class="hs-l">стрик 🔥</div></div>
+    <div class="hs"><div class="hs-v" id="hLevel">—</div><div class="hs-l">уровень</div></div>
+  </div>
+  <button class="ibtn" onclick="toggleTheme()" id="thBtn">🌙</button>
+</header>
+<div class="body">
+<nav class="sb">
+  <button class="nb on" onclick="nav('main')" id="nav-main"><span class="ic">🏠</span><span>Главная</span></button>
+  <button class="nb" onclick="nav('search')" id="nav-search"><span class="ic">🔍</span><span>Поиск слова</span></button>
+  <button class="nb" onclick="nav('punct')" id="nav-punct"><span class="ic">✏️</span><span>Запятые</span></button>
+  <div class="nsep"></div>
+  <button class="nb" onclick="nav('train')" id="nav-train"><span class="ic">🎯</span><span>Тренажёр</span><span class="nbdg" id="dueBadge" style="display:none">0</span></button>
+  <button class="nb" onclick="nav('ege')" id="nav-ege"><span class="ic">📋</span><span>ЕГЭ-режим</span></button>
+  <div class="nsep"></div>
+  <button class="nb" onclick="nav('cards')" id="nav-cards"><span class="ic">📚</span><span>Карточки</span></button>
+  <button class="nb" onclick="nav('stats')" id="nav-stats"><span class="ic">📊</span><span>Статистика</span></button>
+  <div class="nsep"></div>
+  <div class="nbot">
+    <button class="nb" onclick="nav('guide')" id="nav-guide"><span class="ic">📜</span><span>Инструкция</span></button>
+    <button class="nb" onclick="nav('settings')" id="nav-settings"><span class="ic">⚙️</span><span>Настройки</span></button>
+  </div>
+</nav>
+<main class="cnt">
+
+<!-- ══ ГЛАВНАЯ ══ -->
+<div class="pg on" id="page-main">
+  <div class="g2" style="align-items:start;gap:16px">
+    <div>
+      <!-- Hero -->
+      <div style="background:linear-gradient(135deg,#101827,#172554 50%,#7f1d1d);border-radius:20px;padding:20px;margin-bottom:14px;border:1px solid #ffffff18">
+        <p style="font-size:10px;color:#93c5fd;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px">Орфоэпия и пунктуация для ЕГЭ</p>
+        <h1 style="font-size:24px;font-weight:900;color:#fff;margin-bottom:6px">ОрфоДракон</h1>
+        <p style="font-size:12px;color:#cbd5e1;line-height:1.6">Повторяй карточки, сражайся с боссом ошибок, открывай сундуки.</p>
+        <div style="display:flex;justify-content:center;margin:12px 0">
+          <img src="/icons/dragon-king.svg" id="mDragon" alt="дракон"
+               style="height:82px;cursor:pointer;animation:dragonIdle 4s ease-in-out infinite;filter:drop-shadow(0 4px 20px #c084fc44)"
+               onclick="dragonClick()" title="Нажми меня!">
+        </div>
+        <div class="brow" style="justify-content:center">
+          <button class="btn bp" onclick="nav('train')">🚀 Тренировка</button>
+          <button class="btn bs" onclick="nav('ege')">📋 ЕГЭ</button>
+          <button class="btn bg" onclick="nav('cards')">📚 Карточки</button>
+        </div>
+      </div>
+      <!-- Stats grid -->
+      <div class="g4" id="mainStats" style="margin-bottom:14px"></div>
+      <!-- Missions -->
+      <div class="card" style="margin-bottom:14px">
+        <div class="ct">🎯 Миссии дня</div>
+        <div id="missPanel"></div>
+      </div>
+      <!-- Achievements -->
+      <div class="card">
+        <div class="ct">🏅 Достижения</div>
+        <div class="achg" id="achPanel"></div>
+      </div>
+    </div>
+    <div>
+      <!-- Boss -->
+      <div class="bossbox" id="bossPanel">
+        <div class="ct" style="color:var(--gold)">⚔️ Босс недели</div>
+        <div class="brow2">
+          <img src="/icons/dragon-boss.svg" class="bimg" id="bossImg" alt="босс">
+          <div>
+            <div class="bname" id="bossName">Обсидиановый дракон ошибок</div>
+            <div class="bstage" id="bossStage">уровень 1</div>
+            <div class="bhp" id="bossHpTxt">HP: 1200 / 1200</div>
+          </div>
+        </div>
+        <div class="hptrack"><div class="hpfill" id="bossHpFill" style="width:100%"></div></div>
+        <div class="bdmg" id="bossDmgTxt"></div>
+        <p style="font-size:11px;color:var(--org);margin-top:6px">Правильные ответы наносят урон боссу</p>
+      </div>
+      <!-- League + chest -->
+      <div class="card">
+        <div class="ct">🏆 Лига и сундук дня</div>
+        <div id="leagueInfo" class="muted" style="font-size:13px">Загрузка…</div>
+        <div style="margin-top:10px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+            <span class="hint">Прогресс дня</span><span class="hint" id="dayProgLbl"></span>
+          </div>
+          <div class="prog"><div class="pf gld" id="dayProgFill" style="width:0%"></div></div>
+        </div>
+        <div style="margin-top:10px">
+          <button class="btn bgold bsm" onclick="claimChest()">🎁 Открыть сундук дня</button>
+          <div class="ist" id="chestSt"></div>
+        </div>
+      </div>
+      <!-- Weak spots -->
+      <div class="card">
+        <div class="ct">🧠 Слабые места недели</div>
+        <div id="weakPanel" class="muted" style="font-size:13px">Загрузка…</div>
+        <button class="btn bg bsm" style="margin-top:8px" onclick="startTraining('weak')">Тренировать слабые места</button>
+      </div>
+      <!-- Fav + due -->
+      <div class="card">
+        <div class="ct">⭐ Сложные карточки (избранное)</div>
+        <div id="favPanel"></div>
+      </div>
+      <div class="card">
+        <div class="ct">⏰ Приоритетные к повторению</div>
+        <div id="duePanel"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ПОИСК ══ -->
+<div class="pg" id="page-search">
+  <div class="pt">🔍 Поиск и исправление ударения</div>
+  <div class="ps">Введите слово → нажмите «Найти». Гласные буквы мигают — нажмите на нужную</div>
+  <div class="card">
+    <div style="display:flex;gap:8px;margin-bottom:10px">
+      <input type="text" id="searchInput" placeholder="звонит, банты, торты…" style="flex:1" autocomplete="off">
+      <button class="btn bp" onclick="doSearch()">🔎 Найти</button>
+    </div>
+    <div class="wbox">Ударение может стоять неправильно — всегда перепроверяйте!</div>
+    <div class="bigw" id="bigWord">—</div>
+    <div style="text-align:center;font-size:12px;color:var(--tx3);margin-bottom:2px" id="wordSrc"></div>
+    <div style="text-align:center;font-size:12px;color:var(--gold);margin-bottom:10px" id="wordNote"></div>
+    <div class="brow" id="searchActs" style="justify-content:center;display:none">
+      <button class="btn bp bsm" onclick="saveSearchCard()">⭐ В карточки</button>
+      <button class="btn bg bsm" onclick="makeFavorite()">🔥 Приоритетным</button>
+      <button class="btn bg bsm" onclick="nav('train')">🎯 Тренировать</button>
+    </div>
+    <div class="ist" id="searchSt"></div>
+    <div id="searchResults" class="muted" style="margin-top:10px;font-size:13px">Введите слово для поиска.</div>
+  </div>
+  <!-- Accent builder -->
+  <div class="card">
+    <div class="ct">✏️ Поставить / исправить ударение</div>
+    <p class="hint" style="margin-bottom:8px">Гласные подсвечены. Нажмите на нужную → «Сохранить»</p>
+    <input type="text" id="abInput" placeholder="Введите слово…" oninput="renderAB()" autocomplete="off">
+    <div class="abwrap" id="abWrap" style="margin-top:8px"><span class="muted hint">Введите слово выше</span></div>
+    <div class="brow" style="margin-top:10px;align-items:center">
+      <button class="btn bp bsm" onclick="saveOverride()">💾 Сохранить исправление</button>
+      <span id="abPreview" style="font-size:18px;font-weight:800;color:var(--ac2);min-width:60px"></span>
+      <span class="ist" id="abSt"></span>
+    </div>
+  </div>
+  <!-- Matches -->
+  <div class="card" id="matchCard" style="display:none">
+    <div class="ct">Другие совпадения</div>
+    <div id="matchList" style="display:flex;flex-direction:column;gap:4px;max-height:180px;overflow-y:auto"></div>
+  </div>
+  <!-- Due -->
+  <div class="card">
+    <div class="ct" style="display:flex;align-items:center;gap:8px">К повторению <span class="nbdg" id="dueBadge2" style="position:static;display:none">0</span></div>
+    <div id="dueListS" style="display:flex;flex-direction:column;gap:3px;max-height:180px;overflow-y:auto"><div class="muted hint">Загрузка…</div></div>
+  </div>
+</div>
+
+<!-- ══ ЗАПЯТЫЕ ══ -->
+<div class="pg" id="page-punct">
+  <div class="pt">✏️ Расстановка запятых</div>
+  <div class="ps">Введите предложение → нажмите между словами чтобы добавить запятую</div>
+  <div class="card">
+    <label>Предложение</label>
+    <textarea id="punctIn" rows="3" placeholder="Когда я пришел домой я сразу сел делать уроки потому что было поздно"></textarea>
+    <div class="brow" style="margin-top:10px">
+      <button class="btn bp" onclick="doPunct()">⚡ Расставить запятые</button>
+      <button class="btn bg bsm" onclick="clearPunct()">Очистить</button>
+    </div>
+    <div class="ist" id="punctFromCardSt"></div>
+  </div>
+  <div class="card" id="cbCard" style="display:none">
+    <div class="ct">🖱️ Нажмите между словами чтобы поставить/убрать запятую</div>
+    <div class="wbox">Результат всегда проверяйте вручную!</div>
+    <div class="cbwrap" id="cbWrap"></div>
+    <div class="brow" style="margin-top:12px">
+      <button class="btn bg bsm" onclick="clearCommas()">✕ Убрать все</button>
+      <button class="btn bg bsm" onclick="copyPunct()">📋 Копировать</button>
+      <button class="btn bp bsm" onclick="savePunctCard(false)">⭐ В карточки</button>
+      <button class="btn bs bsm" onclick="savePunctCard(true)">🔥 Приоритетным</button>
+    </div>
+    <div class="ist" id="punctSt"></div>
+  </div>
+  <div class="card" id="manualRuleCard" style="display:none">
+    <div class="ct">✍️ Ваше правило для запятой</div>
+    <textarea id="manualPunctRule" rows="3" placeholder="Например: запятая перед союзом «что» отделяет придаточную часть сложноподчинённого предложения"></textarea>
+    <div class="hint" style="margin-top:6px">Это правило сохранится в карточке и будет показываться в тренировке/ЕГЭ.</div>
+  </div>
+  <div class="card" id="rulesCard" style="display:none">
+    <div class="ct">Применённые правила</div>
+    <ul class="rlist" id="rulesList"></ul>
+    <div id="rulesNote" class="hint" style="margin-top:6px;color:var(--gold)"></div>
+  </div>
+</div>
+
+<!-- ══ ТРЕНАЖЁР ══ -->
+<div class="pg" id="page-train">
+  <div class="pt">🎯 Тренажёр</div>
+  <div class="ps">«Знаю» — откладывает карточку. «Не помню» — вернётся через ~10 минут</div>
+  <div class="brow" style="margin-bottom:12px">
+    <select id="trainMode" style="width:auto">
+      <option value="all">Все карточки</option>
+      <option value="stress">Только ударения</option>
+      <option value="punctuation">Только запятые</option>
+      <option value="weak">Слабые места</option>
+    </select>
+    <button class="btn bp" onclick="startTrainingUI()" id="startBtn">▶ Начать</button>
+    <span class="hint" id="trainDueInfo"></span>
+  </div>
+  <div class="prog" style="margin-bottom:8px"><div class="pf" id="trainProg" style="width:0%"></div></div>
+  <div style="display:flex;justify-content:space-between;margin-bottom:12px">
+    <span class="hint" id="trainCounter"></span>
+    <span style="font-size:13px;font-weight:700;color:var(--ac2)" id="trainXp">XP: 0</span>
+  </div>
+  <!-- Boss mini -->
+  <div class="bossbox" id="trainBossPanel" style="display:none;padding:10px 14px;margin-bottom:12px">
+    <div class="brow2" style="margin-bottom:6px">
+      <img src="/icons/dragon-boss.svg" class="bimg" id="trainBossImg" style="width:56px;height:38px" alt="босс">
+      <div>
+        <div class="bname" id="trainBossName" style="font-size:13px">Босс ошибок</div>
+        <div class="bhp" id="trainBossHp" style="font-size:11px"></div>
+      </div>
+    </div>
+    <div class="hptrack"><div class="hpfill" id="trainBossHpFill" style="width:100%"></div></div>
+    <div class="bdmg" id="trainBossDmg"></div>
+  </div>
+  <!-- Card -->
+  <div class="tcard" id="trainCard">
+    <div class="tkind" id="trainKind"></div>
+    <div class="tq" id="trainQ">Нажмите «Начать»</div>
+    <div class="thint" id="trainHint"></div>
+    <div class="ta" id="trainA" style="display:none"></div>
+    <div class="tr" id="trainRule" style="display:none"></div>
+  </div>
+  <div style="margin-top:14px">
+    <button class="btn bg" id="revealBtn" onclick="revealCard()" disabled style="width:100%;font-size:15px;justify-content:center">👁 Показать ответ</button>
+  </div>
+  <div style="display:flex;gap:10px;margin-top:10px">
+    <button class="btn bd" id="forgetBtn" onclick="gradeCard('forget')" disabled style="flex:1;font-size:15px;justify-content:center;display:none">❌ Не помню</button>
+    <button class="btn bok" id="rememberBtn" onclick="gradeCard('remember')" disabled style="flex:1;font-size:15px;justify-content:center;display:none">✅ Знаю!</button>
+  </div>
+  <div class="sumbox" id="trainSummary" style="margin-top:20px;display:none">
+    <div class="sumt">🎉 Тренировка завершена!</div>
+    <div class="sumb" id="trainSumText"></div>
+    <div class="brow" style="justify-content:center;margin-top:16px">
+      <button class="btn bp" onclick="startTrainingUI()">▶ Ещё раз</button>
+      <button class="btn bg" onclick="nav('main')">🏠 Главная</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ЕГЭ ══ -->
+<div class="pg" id="page-ege">
+  <div class="pt">📋 ЕГЭ-режим</div>
+  <div class="ps">10 вопросов · Таймер 10 минут · Оценка и разбор ошибок</div>
+  <div id="egeStart">
+    <div class="card" style="text-align:center;padding:32px">
+      <img src="/icons/dragon-ege.svg" style="height:90px;margin-bottom:12px;animation:dragonIdle 4s ease-in-out infinite;filter:drop-shadow(0 4px 16px #c084fc44)" alt="">
+      <div style="font-size:18px;font-weight:800;color:var(--ac2);margin-bottom:6px">Готов к экзамену?</div>
+      <p class="muted" style="margin-bottom:20px;font-size:13px">Тест из ваших карточек ударений и запятых</p>
+      <button class="btn bp" onclick="startEge()" style="font-size:15px">📋 Начать ЕГЭ-тест</button>
+    </div>
+  </div>
+  <div id="egeExam" style="display:none">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:12px">
+      <div class="hint" id="egeMeta" style="font-size:13px"></div>
+      <div class="etimer" id="egeTimer">10:00</div>
+    </div>
+    <div id="egeForm"></div>
+    <div style="margin-top:16px;text-align:center">
+      <button class="btn bp" onclick="submitEge(false)" id="submitEgeBtn" style="font-size:15px">✅ Завершить</button>
+    </div>
+  </div>
+  <div id="egeResults" style="display:none"></div>
+</div>
+
+<!-- ══ КАРТОЧКИ ══ -->
+<div class="pg" id="page-cards">
+  <div class="pt">📚 Все карточки</div>
+  <div class="ps">Просмотр, поиск, экспорт и импорт</div>
+  <div class="card" style="padding:12px;margin-bottom:10px">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <input type="text" id="cardsSearch" placeholder="Поиск…" style="width:180px" oninput="loadCards()">
+      <select id="cardsKind" onchange="loadCards()"><option value="">Все</option><option value="stress">Ударения</option><option value="punctuation">Запятые</option></select>
+      <select id="cardsFav" onchange="loadCards()"><option value="">Все</option><option value="1">Избранные</option></select>
+      <select id="cardsSort" onchange="loadCards()"><option value="created">По дате</option><option value="alpha">По алфавиту</option><option value="score">По счёту</option></select>
+      <button class="btn bg bsm" onclick="loadCards()">↻</button>
+      <span class="hint" id="cardsCount" style="margin-left:auto"></span>
+    </div>
+  </div>
+  <div class="brow" style="margin-bottom:10px">
+    <button class="btn bd bsm" onclick="deleteSelected()">🗑 Удалить выбранные</button>
+    <button class="btn bg bsm" onclick="favSelected(true)">⭐ В избранное</button>
+    <button class="btn bg bsm" onclick="favSelected(false)">☆ Убрать</button>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <div class="twrap">
+      <table>
+        <thead><tr>
+          <th style="width:28px"><input type="checkbox" id="selAll" onchange="toggleSelAll(this)"></th>
+          <th>Слово</th><th>Ударение / Ответ</th><th>Тип</th><th>Повт.</th><th>Следующее</th><th>⭐</th><th></th>
+        </tr></thead>
+        <tbody id="cardsTbody"><tr><td colspan="8" style="text-align:center;padding:24px;color:var(--tx3)">Загрузка…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="card" style="margin-top:14px">
+    <div class="ct">Экспорт и импорт (формат TXT)</div>
+    <div class="brow">
+      <a href="/api/export/txt" class="btn bg bsm" download>💾 Скачать все карточки (TXT)</a>
+      <button class="btn bg bsm" onclick="document.getElementById('importFile').click()">📥 Импортировать TXT</button>
+      <input type="file" id="importFile" accept=".txt,.json" style="display:none" onchange="doImport(this)">
+    </div>
+    <div class="ist" id="ioSt"></div>
+    <p class="hint" style="margin-top:6px">Формат: слово — ударе́ние (ударения) / Исходное: ... → С запятыми: ... (запятые)</p>
+  </div>
+</div>
+
+<!-- ══ СТАТИСТИКА ══ -->
+<div class="pg" id="page-stats">
+  <div class="pt">📊 Статистика</div>
+  <div class="ps">Прогресс, уровни и достижения</div>
+  <div class="g4" id="statsGrid" style="margin-bottom:16px"></div>
+  <div class="g2">
+    <div class="card">
+      <div class="ct">Прогресс и уровень</div>
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:12px">
+        <div style="text-align:center"><div style="font-size:32px;font-weight:900;color:var(--ac2)" id="statLvl">1</div><div class="hint">уровень</div></div>
+        <div style="flex:1">
+          <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+            <span class="hint" id="xpLbl"></span><span class="hint" id="leagueLbl"></span>
+          </div>
+          <div class="prog" style="margin-bottom:8px"><div class="pf" id="xpBar" style="width:0%"></div></div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+            <span class="hint">Дневная цель</span><span class="hint" id="goalLbl2"></span>
+          </div>
+          <div class="prog"><div class="pf grn" id="goalBar2" style="width:0%"></div></div>
+        </div>
+      </div>
+      <div style="margin-top:10px;font-size:13px;color:var(--tx2)" id="statExtra"></div>
+    </div>
+    <div class="card">
+      <div class="ct">🧠 Слабые места (7 дней)</div>
+      <div id="statWeak" class="muted">Загрузка…</div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:14px">
+    <div class="ct">🐉 Скины дракона</div>
+    <p class="hint" style="margin-bottom:10px">Открывай сундуки — получай новые скины</p>
+    <div class="skgrid" id="skinsGrid"></div>
+  </div>
+</div>
+
+<!-- ══ ИНСТРУКЦИЯ ══ -->
+<div class="pg" id="page-guide">
+  <div class="pt">📜 Инструкция</div>
+  <div class="ps">Как пользоваться приложением</div>
+  <div class="card"><div class="ct">⚙️ Как работает приложение</div>
+    <p style="font-size:13px;line-height:1.9;color:var(--tx2)">
+      Python запускает локальный HTTP-сервер (порт 17832), браузер открывает интерфейс как обычный сайт. Данные — в SQLite-базе на вашем компьютере. Интернет не нужен.<br>
+      <strong style="color:var(--grn)">Плюсы:</strong> без интернета · данные только у вас · любой браузер<br>
+      <strong style="color:var(--fire)">Минусы:</strong> нужно держать Python-процесс открытым · нет системных push-уведомлений
+    </p>
+  </div>
+  <div class="card"><div class="ct">🔔 Уведомления</div>
+    <p style="font-size:13px;line-height:1.9;color:var(--tx2)">
+      Уведомления работают <strong>внутри браузера</strong>:<br>
+      • <strong>Всплывающие тосты</strong> (правый нижний угол) — появляются при каждом действии<br>
+      • <strong>Счётчик в заголовке вкладки</strong> — например <code>(5) ОрфоДракон</code><br>
+      • <strong>Красный бейдж</strong> рядом с «Тренажёром» в меню<br>
+      Системные push-уведомления доступны только в оригинальном браузерном расширении.
+    </p>
+  </div>
+  <div class="card"><div class="ct">🔍 Поиск и ударения</div>
+    <p style="font-size:13px;line-height:1.9;color:var(--tx2)">Введите слово → «Найти» → результат из словаря ФИПИ. Чтобы исправить: введите слово в блоке «Исправить ударение» → <strong>нажмите на мигающую гласную</strong> → «Сохранить». Всё в 3 клика.</p>
+  </div>
+  <div class="card"><div class="ct">✏️ Запятые</div>
+    <p style="font-size:13px;line-height:1.9;color:var(--tx2)">Введите текст → «Расставить» (автоматически по союзам). Затем <strong>нажмите между словами</strong> чтобы добавить/убрать запятую. Если предложение уже есть в ваших карточках — загрузится сохранённый вариант. Результат нужно проверять!</p>
+  </div>
+  <div class="card"><div class="ct">🎯 Тренажёр (SRS)</div>
+    <p style="font-size:13px;line-height:1.9;color:var(--tx2)">«Знаю» → интервал растёт: 15 мин → 1 день → 3 дня → больше. «Не помню» → через ~10 минут снова. «Слабые места» — только карточки с ошибками за неделю.</p>
+  </div>
+  <div class="card"><div class="ct">📋 ЕГЭ-режим</div>
+    <p style="font-size:13px;line-height:1.9;color:var(--tx2)">10 вопросов с вариантами из ваших карточек. Таймер 10 минут. После — оценка 2–5 и разбор каждого вопроса. За правильные ответы начисляется XP и урон боссу.</p>
+  </div>
+  <div class="card"><div class="ct">🏆 Геймификация</div>
+    <p style="font-size:13px;line-height:1.9;color:var(--tx2)">XP → уровни → лиги (Бронзовый → Серебряный → Золотой → Платиновый → Изумрудный → Алмазный). Ежедневный сундук открывается после дневной цели — новый скин дракона (10 вариантов).</p>
+  </div>
+  <div class="card"><div class="ct">💾 Экспорт и импорт</div>
+    <p style="font-size:13px;line-height:1.9;color:var(--tx2)">На странице «Карточки» можно скачать все карточки в формате TXT (читаемый текстовый файл) и импортировать обратно. Для переноса на другой компьютер скопируйте TXT-файл и импортируйте там.</p>
+  </div>
+</div>
+
+<!-- ══ НАСТРОЙКИ ══ -->
+<div class="pg" id="page-settings">
+  <div class="pt">⚙️ Настройки</div>
+  <div class="ps">Параметры повторения и приложения</div>
+  <div class="g2">
+    <div class="card">
+      <div class="ct">Интервалы повторения</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div><label>Первый интервал (мин)</label><input type="number" id="s_first" min="1" max="1440" value="15"></div>
+        <div><label>Второй интервал (мин)</label><input type="number" id="s_second" min="1" max="10080" value="1440"></div>
+        <div><label>Третий интервал (мин)</label><input type="number" id="s_third" min="1" max="43200" value="4320"></div>
+        <div><label>Сброс при ошибке (мин)</label><input type="number" id="s_hard" min="1" max="1440" value="20"></div>
+        <div><label>Карточек за сессию</label><input type="number" id="s_batch" min="5" max="50" value="10"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ct">Прочие настройки</div>
+      <div style="margin-bottom:12px">
+        <label>Дневная цель: <strong id="goalDisp">10</strong> карточек</label>
+        <input type="range" id="s_goal" min="1" max="100" value="10" oninput="document.getElementById('goalDisp').textContent=this.value">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:400"><input type="checkbox" id="s_exam"> ЕГЭ-режим (приоритет словам ФИПИ)</label>
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:400"><input type="checkbox" id="s_auto" checked> Автосохранять слова при поиске</label>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ct">Данные</div>
+    <div class="brow">
+      <button class="btn bd bsm" onclick="resetProgress()">🔄 Сбросить весь прогресс</button>
+    </div>
+    <p class="hint" style="margin-top:8px">Экспортируйте карточки перед сбросом!</p>
+  </div>
+  <div class="brow" style="margin-top:6px">
+    <button class="btn bp" onclick="saveSettings()">💾 Сохранить настройки</button>
+    <span class="ist" id="settSt"></span>
+  </div>
+</div>
+
+</main>
+</div>
+</div>
+<div class="tarea" id="toastArea"></div>
+<script>
+// ═══ CONSTANTS ═══
+const VOWELS = 'аеёиоуыэюяАЕЁИОУЫЭЮЯ';
+const BSKINS = {dragon_boss:'dragon-boss',dragon_forest:'dragon-forest',dragon_storm:'dragon-storm',
+  dragon_crystal:'dragon-crystal',dragon_shadow:'dragon-shadow',dragon_ege:'dragon-ege',
+  dragon_king:'dragon-king',dragon_sage:'dragon-ice',dragon_academy:'dragon-academy',dragon_gold:'dragon-gold'};
+const SNAMES = {dragon_king:'Огненный Король',dragon_boss:'Обсидиановый Босс',dragon_sage:'Ледяной Мудрец',
+  dragon_academy:'Академический',dragon_ege:'ЕГЭ-Дракон',dragon_gold:'Золотой',
+  dragon_forest:'Лесной',dragon_storm:'Грозовой',dragon_crystal:'Кристальный',dragon_shadow:'Теневой'};
+const ALL_SKINS = Object.keys(SNAMES);
+
+// ═══ STATE ═══
+let _searchResult=null,_abIdx=null;
+let _punctResult=null,_cbWords=[],_cbCommas=[];
+let _trainQueue=[],_trainCurrent=null,_trainTotal=0,_trainCorrect=0,_trainDone=0,_trainXp=0,_trainRevealed=false;
+let _egeSession=null,_egeTimer=null,_egeSubmitted=false;
+let _selectedCards=new Set();
+
+// ═══ API ═══
+const api={
+  get:async p=>{const r=await fetch(p);if(!r.ok)throw new Error(`${r.status} ${p}`);return r.json()},
+  post:async(p,b={})=>{const r=await fetch(p,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(b)});if(!r.ok)throw new Error(`${r.status} ${p}`);return r.json()}
+};
+
+// ═══ UTILS ═══
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function clamp(v,min,max){return Math.min(max,Math.max(min,v))}
+function pct(v,total){return total>0?Math.round(clamp(v,0,total)/total*100):0}
+
+// ═══ TOASTS ═══
+function toast(msg,type='inf',ms=3500){
+  const icons={ok:'✅',err:'❌',warn:'⚠️',inf:'ℹ️'};
+  const el=document.createElement('div');
+  el.className=`toast ${type}`;
+  el.innerHTML=`<span class="tico">${icons[type]||'ℹ️'}</span><span>${esc(msg)}</span>`;
+  document.getElementById('toastArea').appendChild(el);
+  setTimeout(()=>{el.style.animation='toastOut .25s forwards';setTimeout(()=>el.remove(),300)},ms);
+}
+function ist(id,msg,type='ok'){
+  const el=document.getElementById(id);if(!el)return;
+  el.className=`ist ${type} on`;el.textContent=msg;
+  setTimeout(()=>{el.className='ist';el.textContent=''},4000);
+}
+
+// ═══ THEME ═══
+function toggleTheme(){
+  const t=document.documentElement.dataset.theme==='dark'?'light':'dark';
+  document.documentElement.dataset.theme=t;
+  document.getElementById('thBtn').textContent=t==='dark'?'🌙':'☀️';
+  localStorage.setItem('orfo_theme',t);
+}
+(()=>{const s=localStorage.getItem('orfo_theme')||'dark';document.documentElement.dataset.theme=s;document.getElementById('thBtn').textContent=s==='dark'?'🌙':'☀️';})();
+
+// ═══ NAV ═══
+function nav(name){
+  document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('on'));
+  const pg=document.getElementById('page-'+name);if(pg)pg.classList.add('on');
+  const nb=document.getElementById('nav-'+name);if(nb)nb.classList.add('on');
+  if(name==='main')     loadMain();
+  if(name==='search')   loadDueForSearch();
+  if(name==='cards')    loadCards();
+  if(name==='stats')    loadStats();
+  if(name==='settings') loadSettingsPage();
+  if(name==='train')    loadTrainDue();
+}
+
+// ═══ HEADER ═══
+async function loadHeaderStats(){
+  try{
+    const s=await api.get('/api/stats');
+    document.getElementById('hTotal').textContent=s.total;
+    document.getElementById('hDue').textContent=s.due;
+    document.getElementById('hStreak').textContent=s.currentStreak;
+    document.getElementById('hLevel').textContent=s.level;
+    document.title=s.due>0?`(${s.due}) ОрфоДракон`:'ОрфоДракон';
+    const b=document.getElementById('dueBadge');
+    if(s.due>0){b.textContent=s.due;b.style.display=''}else b.style.display='none';
+  }catch(e){}
+}
+setInterval(loadHeaderStats,30000);
+
+// ═══ BOSS ═══
+function renderBoss(g,pfx){
+  const maxHp=g.bossMaxHp||1200,hp=Math.max(0,g.bossHp||maxHp),p=Math.round(hp/maxHp*100);
+  const skin=BSKINS[g.bossSkin]||'dragon-boss';
+  const vname=g.bossVariant==='stress'?'Босс ударений':g.bossVariant==='punctuation'?'Босс запятых':'Смешанный босс ошибок';
+  const prefix=pfx||'';const $=id=>document.getElementById(prefix+id);
+  if($('bossName'))  $('bossName').textContent=vname;
+  if($('bossStage')) $('bossStage').textContent=`уровень ${g.bossStage||1}`;
+  if($('bossHpTxt')) $('bossHpTxt').textContent=`HP: ${hp.toLocaleString()} / ${maxHp.toLocaleString()}`;
+  if($('bossHpFill'))$('bossHpFill').style.width=p+'%';
+  if($('bossImg'))   $('bossImg').src=`/icons/${skin}.svg`;
+  if(pfx==='train'){
+    const tp=document.getElementById('trainBossPanel');if(tp)tp.style.display='';
+    const ti=document.getElementById('trainBossImg');if(ti)ti.src=`/icons/${skin}.svg`;
+    const tn=document.getElementById('trainBossName');if(tn)tn.textContent=vname;
+    const th=document.getElementById('trainBossHp');if(th)th.textContent=`HP: ${hp.toLocaleString()} / ${maxHp.toLocaleString()}`;
+    const tf=document.getElementById('trainBossHpFill');if(tf)tf.style.width=p+'%';
+  }
+}
+function flashBoss(amount,pfx){
+  const imgId=pfx==='train'?'trainBossImg':'bossImg';
+  const dmgId=pfx==='train'?'trainBossDmg':'bossDmgTxt';
+  const img=document.getElementById(imgId);const dmg=document.getElementById(dmgId);
+  if(img){img.classList.add('dmg');setTimeout(()=>img.classList.remove('dmg'),600);}
+  if(dmg&&amount>0){dmg.textContent=`-${amount} HP`;dmg.className='bdmg on';setTimeout(()=>dmg.className='bdmg',1500);}
+  spawnParticles(img);
+}
+function spawnParticles(el){
+  if(!el)return;const r=el.getBoundingClientRect();const cx=r.left+r.width/2,cy=r.top+r.height/2;
+  const cols=['#ef4444','#f97316','#f6c84c','#c084fc','#22c55e'];
+  for(let i=0;i<8;i++){
+    const p=document.createElement('div');p.className='particle';const sz=6+Math.random()*6;
+    p.style.cssText=`left:${cx+Math.random()*60-30}px;top:${cy}px;width:${sz}px;height:${sz}px;background:${cols[i%cols.length]};animation-duration:${.6+Math.random()*.6}s;animation-delay:${i*40}ms`;
+    document.body.appendChild(p);setTimeout(()=>p.remove(),1200);
+  }
+}
+
+// Dragon tail animation (from original extension)
+(function(){
+  function tailSwipe(el){
+    if(!el||!el.getBoundingClientRect)return;
+    const r=el.getBoundingClientRect();const cx=r.left+r.width/2,cy=r.top+r.height/2;
+    const vw=window.innerWidth,vh=window.innerHeight;const dir=cx>vw/2?-1:1;
+    const tw=Math.round(Math.min(vw*.9,480)),th=Math.round(tw*.32);
+    const left=Math.max(8,Math.min(cx-tw*.52,vw-tw-8));const top=Math.max(8,Math.min(cy-th*.52,vh-th-8));
+    const s=document.createElement('span');s.className='dragon-tail-swipe';s.setAttribute('aria-hidden','true');
+    s.style.setProperty('--tw',tw+'px');s.style.setProperty('--th',th+'px');
+    s.style.left=left+'px';s.style.top=top+'px';if(dir<0)s.classList.add('dragon-tail-swipe--reverse');
+    const wave=document.createElement('span');wave.className='dragon-tail-wave';
+    s.append(wave);document.body.appendChild(s);
+    const anim=s.animate([
+      {opacity:0,transform:`translate3d(${-dir*18}px,14px,0) rotate(${dir*-16}deg) scale(.74)`},
+      {opacity:1,transform:`translate3d(${-dir*4}px,1px,0) rotate(${dir*-4}deg) scale(1)`,offset:.3},
+      {opacity:.8,transform:`translate3d(${dir*9}px,-8px,0) rotate(${dir*12}deg) scale(.95)`,offset:.76},
+      {opacity:0,transform:`translate3d(${dir*18}px,-12px,0) rotate(${dir*18}deg) scale(.8)`}
+    ],{duration:1680,easing:'cubic-bezier(.18,.82,.2,1)',fill:'forwards'});
+    anim.finished.catch(()=>{}).finally(()=>s.remove());
+    setTimeout(()=>s.remove(),2200);
+  }
+  document.addEventListener('click',e=>{
+    const t=e.target.closest('#revealBtn,.tcard,.egeopt,.ab-v');if(t)tailSwipe(t);
+  },{capture:true});
+})();
+
+function dragonClick(){
+  const el=document.getElementById('mDragon');
+  el.style.animation='dragonWin .8s ease both';
+  setTimeout(()=>{el.style.animation='dragonIdle 4s ease-in-out infinite';},900);
+  spawnParticles(el);toast('🐉 Дракон рад тебя видеть!','inf',2000);
+}
+function applySkin(skin){
+  const f=BSKINS[skin]||'dragon-king';
+  ['mDragon','hDragon'].forEach(id=>{const el=document.getElementById(id);if(el)el.src=`/icons/${f}.svg`;});
+}
+
+// ═══ MAIN PAGE ═══
+async function loadMain(){
+  try{
+    const state=await api.get('/api/state');
+    const{stats,gamification:g,favorites,priorityReviewCards,profile}=state;
+    loadHeaderStats();applySkin(profile?.selectedMascotSkin);
+    // Stats grid
+    const sd=[
+      {v:stats.total,l:'карточек',c:'#c084fc'},{v:stats.due,l:'к повторению',c:'#f87171'},
+      {v:stats.weakCount||0,l:'слабых мест',c:'#fbbf24'},{v:stats.accuracy+'%',l:'точность',c:'#4ade80'},
+      {v:(stats.currentStreak||0)+'🔥',l:'серия дней',c:'#fb923c'},{v:stats.bestStreak||0,l:'лучшая серия',c:'#60a5fa'},
+      {v:stats.level||1,l:'уровень',c:'#c084fc'},{v:stats.rating||0,l:'рейтинг',c:'#a78bfa'}
+    ];
+    document.getElementById('mainStats').innerHTML=sd.map(s=>
+      `<div class="smin"><div class="sv" style="color:${s.c}">${esc(String(s.v))}</div><div class="sl">${esc(s.l)}</div></div>`
+    ).join('');
+    // Boss
+    renderBoss(g);
+    // League
+    const lg=g.league||'';
+    const lc=lg.includes('Алмаз')?'ld':lg.includes('Изумр')?'le':lg.includes('Платин')?'lp':lg.includes('Золот')?'lg':lg.includes('Серебр')?'ls':'lb';
+    document.getElementById('leagueInfo').innerHTML=
+      `<div style="margin-bottom:6px">Лига: <span class="lchip ${lc}">${esc(lg)}</span></div>
+       <div class="hint">Следующая лига с ${g.nextLeague||'?'} уровня</div>
+       <div class="hint">Сегодня: ${clamp(g.rememberedToday||0,0,g.dailyGoal||10)}/${g.dailyGoal||10}${g.chestAvailable?' · <span style="color:var(--gold)">Сундук готов ✨</span>':''}</div>`;
+    const goal=g.dailyGoal||10,rem=clamp(g.rememberedToday||0,0,goal);
+    document.getElementById('dayProgFill').style.width=pct(rem,goal)+'%';
+    document.getElementById('dayProgLbl').textContent=`${rem}/${goal}`;
+    // Missions
+    document.getElementById('missPanel').innerHTML=(g.missions||[]).map(m=>{
+      const p=pct(m.progress,m.target);
+      return `<div class="miitem"><div class="mitit">${esc(m.title)}</div><div class="miprog">${m.progress}/${m.target}</div><div class="prog"><div class="pf" style="width:${p}%"></div></div></div>`;
+    }).join('')||'<div class="muted hint">Миссии обновляются каждый день</div>';
+    // Weak spots
+    const weak=g.weakSpots||[];
+    document.getElementById('weakPanel').innerHTML=weak.length
+      ?weak.map(w=>`<div class="wi"><span>• ${esc(w.label||w.word||'?')}</span><strong style="color:var(--fire)">${w.forgets||0} ошибок</strong></div>`).join('')
+      :'<span class="muted hint">Нет слабых мест 🎉</span>';
+    // Achievements
+    const badges=[
+      {e:'🐉',t:'ОрфоДракон'},{e:'🌱',t:'Первый шаг',c:stats.total>=1},
+      {e:'📚',t:'Коллекционер',c:stats.total>=10},{e:'⭐',t:'Приоритеты',c:(stats.favorites||0)>=5},
+      {e:'🔥',t:'Стрик 3 дня',c:(stats.currentStreak||0)>=3},{e:'🏅',t:'Уровень 5',c:(stats.level||1)>=5},
+      {e:'🎯',t:'Дневная цель',c:rem>=goal},{e:'🧠',t:'Охотник ошибок',c:weak.length>0},
+      {e:'⚔️',t:'Укротитель',c:(g.bossHp||1200)<(g.bossMaxHp||1200)*.9},
+      {e:'🎯',t:'Меткий',c:(stats.accuracy||0)>=80}
+    ].filter(b=>b.c===undefined||b.c);
+    document.getElementById('achPanel').innerHTML=badges.map((b,i)=>
+      `<div class="ach" style="animation-delay:${i*60}ms"><span class="aem">${b.e}</span><span class="at">${esc(b.t)}</span></div>`
+    ).join('');
+    renderCiList('favPanel',favorites||[],true);
+    renderCiList('duePanel',priorityReviewCards||[],true);
+  }catch(e){console.error('loadMain:',e);}
+}
+
+function renderCiList(cid,cards,showGrade){
+  const el=document.getElementById(cid);if(!el)return;
+  if(!cards.length){el.innerHTML='<div class="muted hint" style="padding:8px">Пусто</div>';return;}
+  el.innerHTML=cards.slice(0,10).map(c=>{
+    const word=esc((c.word||c.prompt||'').slice(0,55));
+    const ans=esc((c.stressed||c.answer||'').slice(0,55));
+    const grade=showGrade?`<div class="ci-act">
+      <button class="btn bok bxs" onclick="gradeI('${esc(c.id)}','remember')">✅ Помню</button>
+      <button class="btn bd bxs" onclick="gradeI('${esc(c.id)}','forget')">❌</button>
+    </div>`:'';
+    return `<div class="ci"><div class="ci-m">
+      <div><div class="ci-w">${word}</div><div class="ci-a">${ans}</div><div class="ci-meta">${esc(c.source||'')}</div></div>
+      <button class="fbtn ${c.favorite?'on':''}" onclick="toggleFavI('${esc(c.id)}',${!c.favorite})">${c.favorite?'★':'☆'}</button>
+    </div>${grade}</div>`;
+  }).join('');
+}
+
+async function gradeI(id,result){
+  try{
+    const res=await api.post('/api/cards/grade',{id,result});
+    if(res.boss){renderBoss(res.boss,'');if(result==='remember')flashBoss(res.damage||25,'');}
+    toast(result==='remember'?'✅ Запомнено! +XP':'📚 Повторим позже','ok',1500);
+    loadMain();loadHeaderStats();
+  }catch(e){toast('Ошибка','err');}
+}
+async function toggleFavI(id,val){
+  try{await api.post('/api/cards/favorite',{id,value:val});toast(val?'⭐ В избранное':'☆ Убрано','inf',2000);loadMain();}catch(e){}
+}
+async function claimChest(){
+  try{
+    const res=await api.post('/api/chest/claim',{});
+    if(res.ok){
+      const msg=res.skinUnlocked?`🎁 +30 XP, уровень ${res.level}! Новый скин: ${SNAMES[res.skinUnlocked]||res.skinUnlocked}!`:`🎁 Сундук открыт! +30 XP, уровень ${res.level}.`;
+      ist('chestSt',msg,'ok');toast(msg,'ok',5000);spawnParticles(document.getElementById('mDragon'));
+    }else if(res.reason==='already_claimed'){ist('chestSt','Сундук уже открыт сегодня','warn');}
+    else{ist('chestSt',`Выполни дневную цель! (${res.progress||0}/${res.target||10})`, 'warn');}
+    loadMain();
+  }catch(e){toast('Ошибка','err');}
+}
+function startTraining(mode){nav('train');setTimeout(()=>startTrainingImpl(mode||'all',10),150);}
+
+// ═══ SEARCH PAGE ═══
+async function doSearch(){
+  const q=document.getElementById('searchInput').value.trim();if(!q)return;
+  document.getElementById('bigWord').textContent='…';
+  try{
+    const data=await api.get('/api/search?q='+encodeURIComponent(q)+'&save=1');
+    _searchResult=data.exact;
+    const SRCS={local_dictionary:'✅ Словарь ФИПИ',fipi_dictionary:'✅ ФИПИ',cards:'📚 Карточки',manual_override:'✏️ Исправлено вручную',extension_fallback:'⚠️ Автоматически',heuristic:'⚠️ Автоматически'};
+    if(data.exact){
+      document.getElementById('bigWord').textContent=data.exact.stressed||data.exact.word||'—';
+      document.getElementById('wordSrc').textContent=SRCS[data.exact.source]||data.exact.source||'';
+      document.getElementById('wordNote').textContent=data.exact.fallback?(data.exact.note||''):'';
+      document.getElementById('searchActs').style.display='flex';
+      document.getElementById('abInput').value=data.exact.word||q;_abIdx=null;renderAB();
+    }else{
+      document.getElementById('bigWord').textContent='Не найдено';
+      document.getElementById('wordSrc').textContent='';document.getElementById('wordNote').textContent='';
+      document.getElementById('searchActs').style.display='none';
+    }
+    document.getElementById('searchResults').innerHTML=(data.results||[]).map(r=>
+      `<div style="background:var(--bg3);border-radius:7px;padding:7px 10px;margin-bottom:4px;font-size:13px">
+         <strong>${esc(r.word||'')}</strong> → <span style="color:var(--ac2);font-weight:800">${esc(r.stressed||'')}</span>
+         <span class="muted" style="font-size:10px"> ${esc(r.location||'')} · ${esc(r.source||'')}</span></div>`
+    ).join('')||'<span class="muted">Совпадений нет</span>';
+    const others=(data.results||[]).filter((_,i)=>i>0);
+    if(others.length){
+      document.getElementById('matchCard').style.display='';
+      document.getElementById('matchList').innerHTML=others.slice(0,6).map(r=>{
+        const ic={'cards':'📚','dictionary':'📖','resolved':'🔮'}[r.location]||'';
+        return `<div style="padding:6px 8px;border-radius:6px;background:var(--bg3);font-size:13px;cursor:pointer"
+          onmouseenter="this.style.background='var(--bg4)'" onmouseleave="this.style.background='var(--bg3)'"
+          onclick="document.getElementById('bigWord').textContent='${esc(r.stressed||r.word||'')}';_searchResult=${JSON.stringify(r).replace(/</g,'\\u003c')}">${ic} ${esc(r.stressed||r.word||'')}</div>`;
+      }).join('');
+    }else document.getElementById('matchCard').style.display='none';
+  }catch(e){toast('Ошибка поиска','err');console.error(e);}
+}
+document.getElementById('searchInput').addEventListener('keydown',e=>{if(e.key==='Enter')doSearch();});
+
+async function saveSearchCard(){
+  if(!_searchResult){await doSearch();if(!_searchResult)return;}
+  try{
+    await api.post('/api/search/save',{word:_searchResult.word||'',stressed:_searchResult.stressed||'',source:_searchResult.source||'search',note:_searchResult.note||''});
+    ist('searchSt','✅ Слово добавлено в карточки','ok');toast('✅ Слово добавлено в карточки','ok');
+    loadHeaderStats();
+  }catch(e){toast('Ошибка сохранения','err');}
+}
+async function makeFavorite(){
+  if(!_searchResult)return;
+  try{await api.post('/api/cards/favorite',{id:_searchResult.id||_searchResult.word,value:true});ist('searchSt','🔥 Сделано приоритетным','ok');toast('🔥 Приоритетным','ok');}catch(e){toast('Ошибка','err');}
+}
+async function loadDueForSearch(){
+  try{
+    const cards=await api.get('/api/due');const n=cards.length;
+    const b=document.getElementById('dueBadge2');if(b){b.textContent=n;b.style.display=n?'':'none';}
+    document.getElementById('dueListS').innerHTML=n
+      ?cards.slice(0,12).map(c=>`<div style="padding:7px 10px;border-radius:7px;background:var(--bg3);font-size:13px;cursor:pointer"
+          onmouseenter="this.style.background='var(--bg4)'" onmouseleave="this.style.background='var(--bg3)'"
+          ondblclick="document.getElementById('searchInput').value='${esc(c.word||'')}';doSearch()">
+          ${c.kind==='stress'?'📖':'✏️'} <strong>${esc(c.word||'')}</strong></div>`).join('')
+      :'<div class="muted hint">Нет карточек к повторению 🎉</div>';
+  }catch(e){}
+}
+
+// ═══ ACCENT BUILDER ═══
+function renderAB(){
+  const word=document.getElementById('abInput').value.trim();const wrap=document.getElementById('abWrap');
+  if(!word){wrap.innerHTML='<span class="muted hint">Введите слово выше</span>';document.getElementById('abPreview').textContent='';_abIdx=null;return;}
+  const letters=[...word].map((ch,i)=>{
+    const isV=VOWELS.includes(ch),sel=_abIdx===i;
+    return `<button class="ab-btn ${isV?'ab-v':''} ${sel?'ab-sel':''}"
+      ${isV?`onclick="selectVowel(${i})" title="Ударение на «${ch}»"`:'disabled'}>${esc(ch)}</button>`;
+  }).join('');
+  const preview=_abIdx!=null?word.slice(0,_abIdx+1)+'\u0301'+word.slice(_abIdx+1):word;
+  wrap.innerHTML=letters+`<div class="ab-pre">Результат: <strong style="color:var(--ac2);font-size:16px">${esc(preview)}</strong></div>`;
+  document.getElementById('abPreview').textContent=preview;
+}
+function selectVowel(i){_abIdx=i;renderAB();}
+async function saveOverride(){
+  const word=document.getElementById('abInput').value.trim();
+  if(!word){ist('abSt','Введите слово','warn');return;}
+  if(_abIdx==null){ist('abSt','Нажмите на мигающую гласную ↑','warn');toast('Нажмите на гласную букву','warn');return;}
+  const stressed=word.slice(0,_abIdx+1)+'\u0301'+word.slice(_abIdx+1);
+  try{
+    await api.post('/api/cards/stress_override',{word,stressed});
+    ist('abSt',`✅ Сохранено: ${stressed}`,'ok');toast(`✅ Ударение: ${stressed}`,'ok');
+    document.getElementById('searchInput').value=word;doSearch();
+  }catch(e){toast('Ошибка','err');}
+}
+
+// ═══ PUNCTUATION PAGE ═══
+async function doPunct(){
+  const text=document.getElementById('punctIn').value.trim();if(!text)return;
+  try{
+    // 1. Check if sentence exists in cards
+    const lookup=await api.get('/api/punctuate/lookup?text='+encodeURIComponent(text));
+    if(lookup.found&&lookup.card){
+      const card=lookup.card;_punctResult={original:text,result:card.answer,explanations:[card.rule||'Из карточки'],note:'Загружено из сохранённой карточки.',fromCard:true};
+      buildCommaBuilder(text,_punctResult);
+      document.getElementById('cbCard').style.display='';
+      document.getElementById('manualRuleCard').style.display='';document.getElementById('rulesCard').style.display='';
+      document.getElementById('rulesList').innerHTML='';
+      const li=document.createElement('li');li.textContent=card.rule||'Сохранённый вариант';document.getElementById('rulesList').appendChild(li);
+      document.getElementById('rulesNote').textContent='Это предложение уже есть в ваших карточках.';
+      const mr=document.getElementById('manualPunctRule'); if(mr)mr.value=card.rule||'';
+      ist('punctFromCardSt','📚 Загружено из карточки: '+esc(card.answer),'inf');
+      toast('📚 Загружено из карточки','inf');return;
+    }
+    // 2. Auto-punctuate
+    const data=await api.post('/api/punctuate',{text});_punctResult=data;
+    buildCommaBuilder(text,data);
+    document.getElementById('cbCard').style.display='';document.getElementById('manualRuleCard').style.display='';document.getElementById('rulesCard').style.display='';
+    const ul=document.getElementById('rulesList');ul.innerHTML='';
+    (data.explanations||[]).forEach(r=>{const li=document.createElement('li');li.textContent=r;ul.appendChild(li);});
+    document.getElementById('rulesNote').textContent=data.note||'';
+    toast('✅ Запятые расставлены','ok',2000);
+  }catch(e){toast('Ошибка','err');console.error(e);}
+}
+
+function buildCommaBuilder(originalText,punctData){
+  const raw=originalText.replace(/[.,!?;:]/g,' ').trim();
+  _cbWords=raw.split(/\s+/).filter(Boolean);
+  _cbCommas=new Array(Math.max(0,_cbWords.length-1)).fill(false);
+  if(punctData.result){
+    const rw=punctData.result.replace(/[.,!?;:]/g,w=>` ${w} `).split(/\s+/).filter(Boolean);
+    let wi=0;
+    for(let ri=0;ri<rw.length&&wi<_cbWords.length;ri++){
+      if(rw[ri]===','){if(wi>0)_cbCommas[wi-1]=true;}else wi++;
+    }
+  }
+  renderCommaBuilder();
+}
+
+function renderCommaBuilder(){
+  const wrap=document.getElementById('cbWrap');if(!_cbWords.length){wrap.innerHTML='<span class="muted hint">Нет слов</span>';return;}
+  let html='';
+  for(let i=0;i<_cbWords.length;i++){
+    html+=`<span class="cbw">${esc(_cbWords[i])}</span>`;
+    if(i<_cbWords.length-1){
+      html+=`<span class="cbs ${_cbCommas[i]?'on':''}" onclick="toggleComma(${i})" title="${_cbCommas[i]?'Убрать запятую':'Поставить запятую'}"></span>`;
+    }
+  }
+  let result=_cbWords[0]||'';
+  for(let i=0;i<_cbCommas.length;i++){result+=(_cbCommas[i]?','  :'')+' '+_cbWords[i+1];}
+  result=result.replace(/\s+/g,' ').trim();
+  // Fix spacing around commas
+  result=result.replace(/\s*,\s*/g,', ').replace(/\s+/g,' ').trim();
+  if(result&&!/[.!?]$/.test(result))result+='.';
+  html+=`<div class="cbres">Результат: <strong>${esc(result)}</strong></div>`;
+  wrap.innerHTML=html;
+}
+
+function toggleComma(i){
+  _cbCommas[i]=!_cbCommas[i];renderCommaBuilder();
+  toast(_cbCommas[i]?'✅ Запятая добавлена':'✕ Запятая убрана','inf',1500);
+}
+function clearCommas(){_cbCommas=_cbCommas.map(()=>false);renderCommaBuilder();}
+function getPunctResult(){
+  let result=_cbWords[0]||'';
+  for(let i=0;i<_cbCommas.length;i++){result+=(_cbCommas[i]?','  :'')+' '+_cbWords[i+1];}
+  result=result.replace(/\s*,\s*/g,', ').replace(/\s+/g,' ').trim();
+  return result+(result&&!/[.!?]$/.test(result)?'.':'');
+}
+function copyPunct(){const text=getPunctResult();if(text)navigator.clipboard.writeText(text).then(()=>toast('📋 Скопировано','ok'));}
+async function savePunctCard(fav){
+  const orig=document.getElementById('punctIn').value.trim();const corr=getPunctResult();
+  if(!orig||!corr){ist('punctSt','Сначала введите предложение','warn');return;}
+  try{
+    const manualRule=(document.getElementById('manualPunctRule')?.value||'').trim();
+    await api.post('/api/punctuate/save',{original:orig,corrected:corr,manualRule,explanations:_punctResult?.explanations||[],note:_punctResult?.note||'',favorite:fav});
+    ist('punctSt',fav?'🔥 Приоритетная карточка сохранена':'⭐ Карточка сохранена','ok');
+    toast(fav?'🔥 Сохранено как приоритетное':'⭐ Карточка сохранена','ok');loadHeaderStats();
+  }catch(e){toast('Ошибка','err');}
+}
+function clearPunct(){
+  document.getElementById('punctIn').value='';
+  document.getElementById('cbCard').style.display='none';document.getElementById('manualRuleCard').style.display='none';document.getElementById('rulesCard').style.display='none';
+  const mr=document.getElementById('manualPunctRule'); if(mr)mr.value='';
+  _punctResult=null;_cbWords=[];_cbCommas=[];
+}
+
+// ═══ TRAINING ═══
+async function loadTrainDue(){
+  try{
+    const due=await api.get('/api/due');const n=due.length;
+    document.getElementById('trainDueInfo').textContent=n?`${n} карточек к повторению`:'Все повторены!';
+    document.getElementById('startBtn').textContent=n?`▶ Начать (${n})`:'▶ Начать заново';
+  }catch(e){}
+}
+function startTrainingUI(){startTrainingImpl(document.getElementById('trainMode').value,10);}
+async function startTrainingImpl(mode,count){
+  try{
+    const data=await api.post('/api/training/start',{mode:mode||'all',count:count||10});
+    _trainQueue=[...(data.cards||[])];_trainTotal=_trainQueue.length;
+    _trainCorrect=0;_trainDone=0;_trainXp=0;_trainRevealed=false;
+    document.getElementById('trainSummary').style.display='none';
+    try{const st=await api.get('/api/state');renderBoss(st.gamification,'train');}catch(e){}
+    if(!_trainTotal){toast('Нет карточек. Добавьте через Поиск.','warn',4000);return;}
+    showNextCard();toast(`▶ Тренировка: ${_trainTotal} карточек`,'inf',2000);
+  }catch(e){toast('Ошибка запуска тренировки','err');console.error(e);}
+}
+
+function showNextCard(){
+  if(!_trainQueue.length){finishTraining();return;}
+  _trainCurrent=_trainQueue.shift();_trainRevealed=false;
+  const kind=_trainCurrent.kind||'stress';
+  document.getElementById('trainKind').textContent=kind==='stress'?'Ударение':'Пунктуация';
+  document.getElementById('trainQ').textContent=kind==='stress'?(_trainCurrent.word||'?'):((_trainCurrent.prompt||'?').slice(0,150));
+  document.getElementById('trainHint').textContent=kind==='stress'?'Как ставится ударение?':'Расставьте запятые';
+  document.getElementById('trainA').textContent=_trainCurrent.stressed||_trainCurrent.answer||'';
+  document.getElementById('trainRule').textContent=(_trainCurrent.rule||_trainCurrent.note||'').slice(0,150);
+  document.getElementById('trainA').style.display='none';document.getElementById('trainRule').style.display='none';
+  document.getElementById('revealBtn').style.display='';document.getElementById('revealBtn').disabled=false;
+  document.getElementById('forgetBtn').style.display='none';document.getElementById('rememberBtn').style.display='none';
+  document.getElementById('forgetBtn').disabled=true;document.getElementById('rememberBtn').disabled=true;
+  document.getElementById('trainProg').style.width=(_trainTotal?Math.round(_trainDone/_trainTotal*100):0)+'%';
+  document.getElementById('trainCounter').textContent=`${_trainDone+1} / ${_trainTotal}`;
+  document.getElementById('trainXp').textContent=`XP: ${_trainXp}`;
+}
+
+function revealCard(){
+  _trainRevealed=true;
+  document.getElementById('trainA').style.display='';
+  if(_trainCurrent?.kind==='punctuation')document.getElementById('trainRule').style.display='';
+  document.getElementById('revealBtn').style.display='none';
+  document.getElementById('forgetBtn').style.display='';document.getElementById('rememberBtn').style.display='';
+  document.getElementById('forgetBtn').disabled=false;document.getElementById('rememberBtn').disabled=false;
+}
+
+async function gradeCard(result){
+  if(!_trainCurrent||!_trainRevealed)return;
+  document.getElementById('forgetBtn').disabled=true;document.getElementById('rememberBtn').disabled=true;
+  try{
+    const res=await api.post('/api/cards/grade',{id:_trainCurrent.id,result});
+    _trainDone++;
+    if(result==='remember'){
+      _trainCorrect++;_trainXp+=_trainCurrent.kind==='punctuation'?8:6;
+      if(res.boss){renderBoss(res.boss,'train');flashBoss(res.damage||25,'train');}
+      toast('✅ Запомнено!','ok',1500);
+    }else{_trainXp+=1;toast('📚 Повторим позже','inf',1500);}
+    document.getElementById('trainXp').textContent=`XP: ${_trainXp}`;
+    loadHeaderStats();setTimeout(showNextCard,400);
+  }catch(e){toast('Ошибка','err');console.error(e);}
+}
+
+function finishTraining(){
+  _trainCurrent=null;
+  const p=_trainTotal?Math.round(_trainCorrect/_trainTotal*100):0;
+  const emoji=p>=80?'🏆 Отлично!':p>=60?'👍 Неплохо!':'📚 Нужно повторить!';
+  document.getElementById('trainQ').textContent='🎉 Тренировка завершена!';
+  document.getElementById('trainKind').textContent='';document.getElementById('trainHint').textContent='';
+  document.getElementById('trainA').style.display='none';document.getElementById('trainRule').style.display='none';
+  document.getElementById('revealBtn').style.display='none';
+  document.getElementById('forgetBtn').style.display='none';document.getElementById('rememberBtn').style.display='none';
+  document.getElementById('trainProg').style.width='100%';
+  document.getElementById('trainSummary').style.display='';
+  document.getElementById('trainSumText').innerHTML=
+    `<p>Карточек: <strong>${_trainTotal}</strong></p>
+     <p>Знаю: <strong style="color:var(--grn)">${_trainCorrect}</strong></p>
+     <p>Не помню: <strong style="color:var(--fire)">${_trainTotal-_trainCorrect}</strong></p>
+     <p>XP: <strong style="color:var(--ac2)">+${_trainXp}</strong></p>
+     <p style="font-size:22px;margin-top:10px">${emoji}</p>`;
+  document.getElementById('startBtn').textContent='▶ Новая тренировка';
+  spawnParticles(document.getElementById('mDragon'));
+  toast(`🎉 ${emoji} ${_trainCorrect}/${_trainTotal} (${p}%)`,'ok',5000);
+  loadHeaderStats();
+}
+
+// ═══ EGE ═══
+async function startEge(){
+  _egeSubmitted=false;
+  try{
+    const session=await api.post('/api/ege/create',{});_egeSession=session;
+    if(!session?.questions?.length){
+      document.getElementById('egeStart').style.display='none';document.getElementById('egeResults').style.display='';
+      document.getElementById('egeResults').innerHTML=`<div class="card" style="text-align:center;padding:32px">
+        <div style="font-size:18px;font-weight:700;color:var(--fire);margin-bottom:8px">Нет карточек для теста</div>
+        <p class="muted" style="margin-bottom:16px">Добавьте карточки ударений и запятых через Поиск</p>
+        <button class="btn bp" onclick="nav('search')">🔍 Добавить карточки</button></div>`;
+      return;
+    }
+    document.getElementById('egeStart').style.display='none';document.getElementById('egeExam').style.display='';
+    document.getElementById('egeMeta').textContent=`${session.questions.length} вопросов`;
+    renderEgeQ(session.questions);startEgeTimer(session);toast('📋 ЕГЭ-тест начат! Удачи!','inf',3000);
+  }catch(e){toast('Ошибка запуска ЕГЭ','err');console.error(e);}
+}
+
+function renderEgeQ(questions){
+  document.getElementById('egeForm').innerHTML=questions.map((q,i)=>`
+    <div class="egeq">
+      <div class="egeqn">${i+1}. ${esc(q.topic||q.kind||'ЕГЭ')}</div>
+      <div class="egeqt">${esc(q.question||'')}</div>
+      <div class="egeqp">${esc(q.prompt||'')}</div>
+      <div class="egeopts">${(q.options||[]).map((opt,oi)=>`
+        <label class="egeopt">
+          <input type="radio" name="q-${i}" value="${esc(opt)}" data-qi="${i}" data-oi="${oi}">
+          <span>${esc(opt)}</span>
+        </label>`).join('')}</div>
+    </div>`).join('');
+}
+
+function startEgeTimer(session){
+  if(_egeTimer)clearInterval(_egeTimer);
+  const start=session.startedAt||Date.now(),dur=session.durationSeconds||600;
+  function upd(){
+    if(_egeSubmitted)return;
+    const left=Math.max(0,dur-Math.floor((Date.now()-start)/1000));
+    const m=Math.floor(left/60),s=left%60;
+    const el=document.getElementById('egeTimer');if(!el)return;
+    el.textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    el.className='etimer'+(left<=60?' warn':'');
+    if(left<=0){toast('⏰ Время вышло. Показываю результаты.','warn',3000);submitEge(true);}
+  }
+  upd();_egeTimer=setInterval(upd,1000);
+}
+
+async function submitEge(expired){
+  if(_egeSubmitted)return;_egeSubmitted=true;
+  if(_egeTimer){clearInterval(_egeTimer);_egeTimer=null;}
+  const qs=_egeSession?.questions||[];
+  const answers=qs.map((_,i)=>{const sel=document.getElementById('egeForm')?.querySelector(`input[name="q-${i}"]:checked`);return sel?sel.value:'';});
+  document.getElementById('egeForm')?.querySelectorAll('input').forEach(el=>el.disabled=true);
+  document.getElementById('submitEgeBtn').disabled=true;
+  try{
+    const res=await api.post('/api/ege/submit',{answers,expired:Boolean(expired)});
+    document.getElementById('egeExam').style.display='none';showEgeResults(res);spawnParticles(document.getElementById('mDragon'));
+  }catch(e){toast('Ошибка отправки теста','err');console.error(e);}
+}
+
+function showEgeResults(res){
+  if(!res)return;
+  const pct2=res.percent||0,mark=res.mark||'',correct=res.correct||0,total=res.total||0;
+  const emoji=pct2>=85?'🏆':pct2>=70?'🎉':pct2>=50?'👍':'📚';
+  // Show boss damage info
+  const bossInfo=res.boss?`<p>Урон боссу: <strong style="color:var(--fire)">-${res.bossDamage||0} HP</strong> (HP босса: ${res.boss.bossHp}/${res.boss.bossMaxHp})</p>`:'';
+  let html=`<div class="sumbox">
+    <div class="sumt">${emoji} ${esc(mark)}</div>
+    <div class="sumb">
+      <p>Верных ответов: <strong>${correct} / ${total}</strong></p>
+      <p>Результат: <strong>${pct2}%</strong></p>
+      <p>+${res.xpGained||0} XP${res.expired?' (время вышло)':''}</p>
+      ${bossInfo}
+    </div>
+    <div class="brow" style="justify-content:center;margin-top:14px">
+      <button class="btn bp" onclick="resetEge()">🔄 Пройти снова</button>
+      <button class="btn bg" onclick="nav('main')">🏠 Главная</button>
+    </div>
+  </div><div style="margin-top:16px">`;
+  (res.questions||[]).forEach((q,i)=>{
+    const isC=q.isCorrect,ua=q.userAnswer||'(нет ответа)';
+    html+=`<div class="egeq ${isC?'right':''}" style="border-left:3px solid ${isC?'var(--grn)':'var(--fire)'}">
+      <div class="egeqn">${i+1}. ${esc(q.topic||'')} ${isC?'✅':'❌'}</div>
+      <div class="egeqt">${esc(q.question||'')}</div>
+      <div class="egeqp">${esc(q.prompt||'')}</div>
+      <div style="font-size:13px;margin-top:4px">Ваш ответ: <strong style="color:${isC?'var(--grn)':'var(--fire)'}">${esc(ua)}</strong></div>
+      ${!isC?`<div style="font-size:13px;color:var(--grn)">Правильно: <strong>${esc(q.correct||'')}</strong></div>`:''}
+      <div style="font-size:11px;color:var(--tx3);margin-top:3px">${esc(q.explanation||'')}</div>
+    </div>`;
+  });
+  html+='</div>';
+  document.getElementById('egeResults').innerHTML=html;document.getElementById('egeResults').style.display='';
+  // Update boss on main
+  if(res.boss)renderBoss(res.boss,'');
+  loadHeaderStats();
+}
+
+function resetEge(){
+  _egeSubmitted=false;_egeSession=null;
+  document.getElementById('egeStart').style.display='';
+  document.getElementById('egeExam').style.display='none';
+  document.getElementById('egeResults').style.display='none';
+  const sb=document.getElementById('submitEgeBtn'); if(sb) sb.disabled=false;
+  document.getElementById('submitEgeBtn').disabled=false;
+}
+
+// ═══ CARDS PAGE ═══
+async function loadCards(){
+  const search=document.getElementById('cardsSearch').value;
+  const kind=document.getElementById('cardsKind').value;
+  const fav=document.getElementById('cardsFav').value;
+  const sort=document.getElementById('cardsSort').value;
+  let url=`/api/cards?sort=${sort}`;
+  if(kind)url+=`&kind=${kind}`;if(fav)url+=`&favorite=${fav}`;if(search)url+=`&search=${encodeURIComponent(search)}`;
+  try{
+    const cards=await api.get(url);_selectedCards.clear();
+    document.getElementById('selAll').checked=false;
+    document.getElementById('cardsCount').textContent=`${cards.length} карточек`;
+    renderCardsTable(cards);
+  }catch(e){toast('Ошибка загрузки карточек','err');}
+}
+
+function formatDue(due_ms){
+  const diff=due_ms-Date.now();if(diff<=0)return '<span class="dnow">Сейчас</span>';
+  const min=Math.floor(diff/60000);if(min<60)return `${min} мин`;
+  const h=Math.floor(min/60);if(h<24)return `${h} ч`;return `${Math.floor(h/24)} дн`;
+}
+
+function renderCardsTable(cards){
+  const tbody=document.getElementById('cardsTbody');
+  if(!cards.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--tx3)">Нет карточек</td></tr>';return;}
+  tbody.innerHTML=cards.map(c=>{
+    const cid=esc(c.id);const word=esc((c.word||c.prompt||'').slice(0,50));
+    const ans=esc((c.stressed||c.answer||'').slice(0,50));
+    const tag=c.kind==='stress'?'<span class="tag ts">ударение</span>':'<span class="tag tp">запятые</span>';
+    return `<tr>
+      <td><input type="checkbox" data-id="${cid}" onchange="selCard(this)"></td>
+      <td>${word}</td><td style="color:var(--ac2);font-weight:700">${ans}</td>
+      <td>${tag}</td><td>${c.reps||0}</td><td>${formatDue(c.due_at||0)}</td>
+      <td>${c.favorite?'⭐':''}</td>
+      <td><button class="btn bg bsm" style="padding:3px 8px" onclick="delCard('${cid}')">🗑</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function selCard(cb){if(cb.checked)_selectedCards.add(cb.dataset.id);else _selectedCards.delete(cb.dataset.id);}
+function toggleSelAll(cb){document.querySelectorAll('#cardsTbody input[type=checkbox]').forEach(el=>{el.checked=cb.checked;if(cb.checked)_selectedCards.add(el.dataset.id);else _selectedCards.delete(el.dataset.id);});}
+
+async function delCard(id){try{await api.post('/api/cards/delete',{id});toast('Карточка удалена','inf',2000);loadCards();loadHeaderStats();}catch(e){toast('Ошибка','err');}}
+async function deleteSelected(){
+  if(!_selectedCards.size)return;if(!confirm(`Удалить ${_selectedCards.size} карточек?`))return;
+  try{await api.post('/api/cards/delete_many',{ids:[..._selectedCards]});toast(`✅ Удалено ${_selectedCards.size}`,'ok');loadCards();loadHeaderStats();}catch(e){toast('Ошибка','err');}
+}
+async function favSelected(val){
+  for(const id of _selectedCards)try{await api.post('/api/cards/favorite',{id,value:val});}catch(e){}
+  toast(val?'⭐ В избранное':'☆ Убрано','inf',2000);loadCards();
+}
+
+async function doImport(input){
+  const file=input.files[0];if(!file)return;
+  const text=await file.text();
+  try{
+    let res;
+    if(file.name.endsWith('.json')){
+      // Legacy JSON import
+      res=await api.post('/api/import/json_legacy',{data:text}).catch(()=>null);
+      if(!res)res={imported:0};
+    }else{
+      res=await api.post('/api/import/txt',{data:text});
+    }
+    ist('ioSt',`✅ Импортировано: ${res.imported||0} записей`,'ok');toast(`✅ Импортировано: ${res.imported||0}`,'ok');
+    loadCards();loadHeaderStats();
+  }catch(e){ist('ioSt','Ошибка импорта','err');}
+  input.value='';
+}
+
+// ═══ STATS PAGE ═══
+async function loadStats(){
+  try{
+    const state=await api.get('/api/state');const{stats,gamification:g,profile}=state;
+    const sd=[
+      {v:stats.total,l:'карточек всего',c:'#c084fc'},{v:stats.due,l:'к повторению',c:'#f87171'},
+      {v:stats.weakCount||0,l:'слабых мест',c:'#fbbf24'},{v:stats.accuracy+'%',l:'точность',c:'#4ade80'},
+      {v:(stats.currentStreak||0)+'🔥',l:'серия дней',c:'#fb923c'},{v:stats.bestStreak||0,l:'лучшая серия',c:'#60a5fa'},
+      {v:stats.level||1,l:'уровень',c:'#c084fc'},{v:stats.rating||0,l:'рейтинг',c:'#a78bfa'}
+    ];
+    document.getElementById('statsGrid').innerHTML=sd.map(s=>
+      `<div class="smin"><div class="sv" style="color:${s.c}">${esc(String(s.v))}</div><div class="sl">${esc(s.l)}</div></div>`
+    ).join('');
+    const lvl=stats.level||1,xp=stats.xp||0,xpInLvl=xp%100;
+    document.getElementById('statLvl').textContent=lvl;
+    document.getElementById('xpLbl').textContent=`XP: ${xpInLvl}/100 (всего: ${xp})`;
+    document.getElementById('xpBar').style.width=xpInLvl+'%';
+    const lg=stats.league||'';
+    const lc=lg.includes('Алмаз')?'ld':lg.includes('Изумр')?'le':lg.includes('Платин')?'lp':lg.includes('Золот')?'lg':lg.includes('Серебр')?'ls':'lb';
+    document.getElementById('leagueLbl').innerHTML=`🏆 <span class="lchip ${lc}">${esc(lg)}</span>`;
+    const goal=g.dailyGoal||10,rem=clamp(g.rememberedToday||0,0,goal);
+    document.getElementById('goalLbl2').textContent=`${rem}/${goal}`;
+    document.getElementById('goalBar2').style.width=pct(rem,goal)+'%';
+    // Extra stats
+    document.getElementById('statExtra').innerHTML=
+      `<div>Всего повторений: <strong>${profile.totalReviews||0}</strong></div>
+       <div>Правильных: <strong>${profile.totalCorrect||0}</strong></div>
+       <div>Лучшая серия: <strong>${stats.bestStreak||0}</strong> дней</div>
+       <div>Выполнено миссий: <strong>${profile.missionsCompleted||0}</strong></div>`;
+    // Weak spots
+    const weak=g.weakSpots||[];
+    document.getElementById('statWeak').innerHTML=weak.length
+      ?weak.map(w=>`<div class="wi"><span>• <strong>${esc(w.label||w.word||'?')}</strong></span><strong style="color:var(--fire)">${w.forgets||0} ошибок</strong></div>`).join('')
+      :'<span class="muted">Нет слабых мест 🎉</span>';
+    // Skins
+    const unlocked=new Set(profile.unlockedMascotSkins||['dragon_king','dragon_boss','dragon_sage']);
+    const selSkin=profile.selectedMascotSkin||'dragon_king';
+    document.getElementById('skinsGrid').innerHTML=ALL_SKINS.map(sk=>{
+      const isUnl=unlocked.has(sk),isSel=sk===selSkin;
+      return `<div class="skcard ${isSel?'sel':''} ${!isUnl?'locked':''}" onclick="${isUnl?`setSkin('${sk}')`:''}" title="${!isUnl?'Заблокировано — открывай сундуки':''}">
+        <img src="/icons/${BSKINS[sk]||'dragon-king'}.svg" alt="${SNAMES[sk]||sk}">
+        <div class="skn">${esc(SNAMES[sk]||sk)}</div>
+        <div class="skst">${isSel?'✅ Выбран':isUnl?'Доступен':'🔒 Заблокирован'}</div>
+      </div>`;
+    }).join('');
+  }catch(e){console.error('loadStats:',e);}
+}
+
+async function setSkin(skin){
+  try{await api.post('/api/mascot/skin',{skin});applySkin(skin);loadStats();toast(`🐉 Скин: ${SNAMES[skin]||skin}`,'ok');}catch(e){toast('Ошибка','err');}
+}
+
+// ═══ SETTINGS ═══
+async function loadSettingsPage(){
+  try{
+    const s=await api.get('/api/settings');
+    document.getElementById('s_first').value=s.firstIntervalMinutes||15;
+    document.getElementById('s_second').value=s.secondIntervalMinutes||1440;
+    document.getElementById('s_third').value=s.thirdIntervalMinutes||4320;
+    document.getElementById('s_hard').value=s.hardResetMinutes||20;
+    document.getElementById('s_batch').value=s.reviewBatchSize||10;
+    document.getElementById('s_goal').value=s.dailyGoal||10;
+    document.getElementById('goalDisp').textContent=s.dailyGoal||10;
+    document.getElementById('s_exam').checked=!!s.examMode;
+    document.getElementById('s_auto').checked=s.autoSaveProcessedWords!==0;
+  }catch(e){}
+}
+async function saveSettings(){
+  try{
+    await api.post('/api/settings/save',{
+      firstIntervalMinutes:+document.getElementById('s_first').value,
+      secondIntervalMinutes:+document.getElementById('s_second').value,
+      thirdIntervalMinutes:+document.getElementById('s_third').value,
+      hardResetMinutes:+document.getElementById('s_hard').value,
+      reviewBatchSize:+document.getElementById('s_batch').value,
+      dailyGoal:+document.getElementById('s_goal').value,
+      examMode:document.getElementById('s_exam').checked?1:0,
+      autoSaveProcessedWords:document.getElementById('s_auto').checked?1:0
+    });
+    ist('settSt','✅ Настройки сохранены','ok');toast('✅ Настройки сохранены','ok');loadHeaderStats();
+  }catch(e){toast('Ошибка','err');}
+}
+async function resetProgress(){
+  if(!confirm('Удалить ВСЕ карточки и прогресс? Нельзя отменить!'))return;
+  try{
+    const cards=await api.get('/api/cards');
+    if(cards.length)await api.post('/api/cards/delete_many',{ids:cards.map(c=>c.id)});
+    toast('Прогресс сброшен','inf');loadHeaderStats();
+  }catch(e){toast('Ошибка','err');}
+}
+
+
+
+// ═══ REMINDERS / NOTIFICATIONS ═══
+let _reminderTimer=null,_lastNotificationAt=0,_remindPausedUntil=0;
+function reminderPanel(count){
+  let el=document.getElementById('reminderPanel');
+  if(!el){el=document.createElement('div');el.id='reminderPanel';el.style.cssText='position:fixed;right:18px;bottom:88px;z-index:9998;max-width:340px;background:var(--bg2);border:1px solid var(--ac);border-radius:14px;padding:14px;box-shadow:var(--shd);display:none';document.body.appendChild(el);}
+  el.innerHTML=`<div style="font-weight:900;color:var(--ac2);margin-bottom:6px">🔔 Пора повторить карточки</div><div class="hint" style="margin-bottom:10px">К повторению: <strong>${count}</strong></div><div class="brow"><button class="btn bp bsm" onclick="openReminderTraining()">Открыть</button><button class="btn bg bsm" onclick="remindLater(15)">Напомнить позже</button><button class="btn bd bsm" onclick="hideReminderPanel()">Закрыть</button></div>`;
+  el.style.display='block';
+}
+function hideReminderPanel(){const el=document.getElementById('reminderPanel');if(el)el.style.display='none';}
+function openReminderTraining(){hideReminderPanel();window.focus();nav('train');}
+function remindLater(minutes=15){hideReminderPanel();_remindPausedUntil=Date.now()+minutes*60*1000;if(_reminderTimer)clearTimeout(_reminderTimer);_reminderTimer=setTimeout(checkDueNotifications,minutes*60*1000+500);toast(`⏰ Напомню через ${minutes} минут`,'inf');}
+async function requestNotifications(){if(!('Notification' in window))return false;if(Notification.permission==='granted')return true;if(Notification.permission==='denied')return false;try{return (await Notification.requestPermission())==='granted';}catch(e){return false;}}
+async function checkDueNotifications(){try{if(Date.now()<_remindPausedUntil)return;const cards=await api.get('/api/due');const count=Array.isArray(cards)?cards.length:(cards.count||0);if(!count)return;const now=Date.now();if(now-_lastNotificationAt<10*60*1000)return;_lastNotificationAt=now;reminderPanel(count);if(await requestNotifications()){const n=new Notification('ОрфоДракон: пора повторить',{body:`К повторению: ${count}. Нажмите, чтобы открыть тренажёр.`,tag:'orfodragon-review',renotify:true,requireInteraction:true});n.onclick=()=>{window.focus();nav('train');hideReminderPanel();n.close();};}}catch(e){console.warn('notifications:',e);}}
+function initNotifications(){requestNotifications();checkDueNotifications();setInterval(checkDueNotifications,60*1000);}
+
+// ═══ INIT ═══
+loadMain();
+loadHeaderStats();
+loadDueForSearch();
+initNotifications();
+</script>
+</body>
+</html>
