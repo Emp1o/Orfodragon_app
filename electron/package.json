@@ -1,0 +1,128 @@
+{
+  "name": "orfodragon",
+  "productName": "OrfoDragon",
+  "version": "1.0.0",
+  "description": "Trainer for Russian stress and punctuation",
+  "homepage": "https://orfodragon.local",
+  "main": "main.js",
+  "private": true,
+  "license": "UNLICENSED",
+  "author": {
+    "name": "OrfoDragon",
+    "email": "orfodragon@yandex.com"
+  },
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder",
+    "dist:mac": "electron-builder --mac dmg zip",
+    "dist:win": "electron-builder --win nsis portable",
+    "dist:win:x64": "electron-builder --win nsis portable --x64",
+    "dist:win:arm64": "electron-builder --win nsis portable --arm64",
+    "dist:win:setup": "electron-builder --win nsis",
+    "dist:win:portable": "electron-builder --win portable",
+    "dist:linux": "electron-builder --linux rpm AppImage",
+    "dist:rpm": "electron-builder --linux rpm"
+  },
+  "build": {
+    "appId": "ru.orfodragon.app",
+    "productName": "OrfoDragon",
+    "executableName": "orfodragon",
+    "asar": true,
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": "../packaged_backend",
+        "to": "backend",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "../icons",
+        "to": "icons",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "mac": {
+      "identity": null,
+      "category": "public.app-category.education",
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "icon": "../icons/icon.icns",
+      "artifactName": "OrfoDragon-${version}-${arch}.${ext}",
+      "gatekeeperAssess": false,
+      "hardenedRuntime": false,
+      "extendInfo": {
+        "CFBundleDisplayName": "OrfoDragon",
+        "CFBundleName": "OrfoDragon",
+        "NSHighResolutionCapable": true
+      }
+    },
+    "dmg": {
+      "title": "OrfoDragon",
+      "icon": "../icons/icon.icns",
+      "artifactName": "OrfoDragon-${version}-${arch}.${ext}",
+      "contents": [
+        {
+          "x": 130,
+          "y": 220
+        },
+        {
+          "x": 410,
+          "y": 220,
+          "type": "link",
+          "path": "/Applications"
+        }
+      ]
+    },
+    "win": {
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "icon": "../icons/icon.ico",
+      "artifactName": "${productName}-${version}-${arch}.${ext}",
+      "requestedExecutionLevel": "asInvoker"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowElevation": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "OrfoDragon",
+      "deleteAppDataOnUninstall": false,
+      "artifactName": "OrfoDragon-Setup-${version}-${arch}.${ext}"
+    },
+    "portable": {
+      "artifactName": "OrfoDragon-Portable-${version}-${arch}.${ext}"
+    },
+    "linux": {
+      "target": [
+        "rpm"
+      ],
+      "category": "Education",
+      "icon": "../icons/icon.png",
+      "maintainer": "OrfoDragon <orfodragon@yandex.com>",
+      "vendor": "OrfoDragon",
+      "synopsis": "OrfoDragon",
+      "artifactName": "orfodragon-${version}.${arch}.${ext}"
+    }
+  },
+  "devDependencies": {
+    "electron": "^31.7.7",
+    "electron-builder": "^24.13.3"
+  }
+}

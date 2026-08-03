@@ -1,0 +1,9 @@
+node_modules/
+**/node_modules/
+
+electron/dist/
+dist/
+build/
+
+.env
+.DS_Store
